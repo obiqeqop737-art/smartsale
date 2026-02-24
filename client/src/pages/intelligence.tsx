@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,10 +23,26 @@ export default function IntelligencePage() {
   const { toast } = useToast();
   const [selectedPost, setSelectedPost] = useState<IntelligencePost | null>(null);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
   const { data: posts = [], isLoading } = useQuery<IntelligencePost[]>({
     queryKey: ["/api/intelligence-posts"],
+  });
+
+  const { data: favorites = [] } = useQuery<number[]>({
+    queryKey: ["/api/intelligence-posts/favorites"],
+  });
+
+  const toggleFavoriteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await apiRequest("POST", `/api/intelligence-posts/${id}/favorite`);
+      return res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/intelligence-posts/favorites"] });
+      toast({ title: data.isFavorite ? "已加入收藏" : "已取消收藏" });
+    },
   });
 
   const trackViewMutation = useMutation({
@@ -37,6 +53,9 @@ export default function IntelligencePage() {
 
   const filteredPosts = useMemo(() => {
     let result = posts;
+    if (showFavoritesOnly) {
+      result = result.filter(p => favorites.includes(p.id));
+    }
     if (activeCategory) {
       result = result.filter(p => p.category === activeCategory);
     }
@@ -49,7 +68,7 @@ export default function IntelligencePage() {
       );
     }
     return result;
-  }, [posts, activeCategory, searchQuery]);
+  }, [posts, favorites, activeCategory, searchQuery, showFavoritesOnly]);
 
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -104,9 +123,9 @@ export default function IntelligencePage() {
 
       <div className="mb-4 flex flex-wrap gap-2">
         <button
-          onClick={() => setActiveCategory(null)}
+          onClick={() => { setActiveCategory(null); setShowFavoritesOnly(false); }}
           className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs transition-all ${
-            !activeCategory
+            !activeCategory && !showFavoritesOnly
               ? "bg-blue-500/20 border-blue-500/40 text-blue-300"
               : "bg-slate-800/30 border-slate-700/30 text-slate-500 hover:text-slate-300 hover:border-slate-600/40"
           }`}
@@ -114,6 +133,19 @@ export default function IntelligencePage() {
         >
           全部
           <span className="ml-1 text-[10px] opacity-70">{posts.length}</span>
+        </button>
+        <button
+          onClick={() => { setShowFavoritesOnly(!showFavoritesOnly); setActiveCategory(null); }}
+          className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs transition-all ${
+            showFavoritesOnly
+              ? "bg-amber-500/20 border-amber-500/40 text-amber-300"
+              : "bg-slate-800/30 border-slate-700/30 text-slate-500 hover:text-amber-300 hover:border-amber-600/40"
+          }`}
+          data-testid="filter-favorites"
+        >
+          <Star className={`h-3 w-3 ${showFavoritesOnly ? "fill-amber-300" : ""}`} />
+          我的收藏
+          <span className="ml-1 text-[10px] opacity-70">{favorites.length}</span>
         </button>
         {Object.entries(categoryConfig).map(([key, cfg]) => {
           const isActive = activeCategory === key;
@@ -168,6 +200,7 @@ export default function IntelligencePage() {
           {filteredPosts.map((post, idx) => {
             const cfg = categoryConfig[post.category] || categoryConfig.industry;
             const Icon = cfg.icon;
+            const isFavorite = favorites.includes(post.id);
             return (
               <div key={post.id} className="mb-4 break-inside-avoid">
                 <div
@@ -175,14 +208,25 @@ export default function IntelligencePage() {
                   data-testid={`intel-card-${post.id}`}
                   onClick={() => handleCardClick(post)}
                 >
-                  {idx === 0 && !activeCategory && !searchQuery && (
-                    <div className="absolute top-3 right-3">
+                  <div className="absolute top-3 right-3 flex gap-2">
+                    {idx === 0 && !activeCategory && !searchQuery && !showFavoritesOnly && (
                       <div className="flex items-center gap-1 rounded-full bg-red-500/10 border border-red-500/20 px-2 py-0.5 text-[10px] text-red-400">
                         <Flame className="h-2.5 w-2.5" />
                         热门
                       </div>
-                    </div>
-                  )}
+                    )}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleFavoriteMutation.mutate(post.id);
+                      }}
+                      className={`p-1 rounded-full transition-colors ${
+                        isFavorite ? "text-amber-400" : "text-slate-500 hover:text-amber-400"
+                      }`}
+                    >
+                      <Star className={`h-4 w-4 ${isFavorite ? "fill-amber-400" : ""}`} />
+                    </button>
+                  </div>
                   <div className="mb-3 flex items-center justify-between gap-2">
                     <div className={`flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[10px] ${cfg.bgClass}`}>
                       <Icon className={`h-2.5 w-2.5 ${cfg.color}`} />
@@ -268,12 +312,12 @@ export default function IntelligencePage() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-slate-400 hover:text-blue-400 hover:bg-blue-500/10"
-                  onClick={() => toast({ title: "已收藏" })}
+                  className={`${favorites.includes(selectedPost.id) ? "text-amber-400 hover:text-amber-500" : "text-slate-400 hover:text-blue-400"} hover:bg-blue-500/10`}
+                  onClick={() => toggleFavoriteMutation.mutate(selectedPost.id)}
                   data-testid="button-favorite-intel"
                 >
-                  <Star className="mr-1.5 h-3.5 w-3.5" />
-                  收藏
+                  <Star className={`mr-1.5 h-3.5 w-3.5 ${favorites.includes(selectedPost.id) ? "fill-amber-400" : ""}`} />
+                  {favorites.includes(selectedPost.id) ? "已收藏" : "收藏"}
                 </Button>
                 <Button
                   variant="ghost"

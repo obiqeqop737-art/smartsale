@@ -122,8 +122,15 @@ export async function registerRoutes(
       } else if (ext === "pdf") {
         try {
           const pdfParse = (await import("pdf-parse")).default;
-          const pdfData = await pdfParse(file.buffer);
-          content = pdfData.text || "";
+          if (typeof pdfParse === 'function') {
+            const pdfData = await pdfParse(file.buffer);
+            content = pdfData.text || "";
+          } else {
+             // Fallback if default is not a function
+             const pdf = await import("pdf-parse");
+             const pdfData = await (pdf as any)(file.buffer);
+             content = pdfData.text || "";
+          }
         } catch {
           content = `[PDF文件: ${file.originalname}] 文件已上传，大小: ${file.size} 字节。`;
         }
@@ -371,6 +378,27 @@ ${kbContext || "（用户尚未上传任何文件到知识库）"}
     } catch (error) {
       console.error("Error fetching intel:", error);
       res.status(500).json({ message: "Failed to fetch intelligence posts" });
+    }
+  });
+
+  app.get("/api/intelligence-posts/favorites", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const favorites = await storage.getFavorites(userId);
+      res.json(favorites);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch favorites" });
+    }
+  });
+
+  app.post("/api/intelligence-posts/:id/favorite", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const id = parseInt(req.params.id);
+      const isFavorite = await storage.toggleFavorite(userId, id);
+      res.json({ isFavorite });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to toggle favorite" });
     }
   });
 

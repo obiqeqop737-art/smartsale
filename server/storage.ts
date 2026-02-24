@@ -1,5 +1,5 @@
 import {
-  folders, knowledgeFiles, tasks, intelligencePosts, chatSessions, chatMessages, activityLogs, dailySummaries,
+  folders, knowledgeFiles, tasks, intelligencePosts, chatSessions, chatMessages, activityLogs, dailySummaries, userFavorites,
   type Folder, type InsertFolder,
   type KnowledgeFile, type InsertKnowledgeFile,
   type Task, type InsertTask,
@@ -8,6 +8,7 @@ import {
   type ChatMessage, type InsertChatMessage,
   type DailySummary, type InsertDailySummary,
   type ActivityLog, type InsertActivityLog,
+  type UserFavorite, type InsertUserFavorite,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, gte, sql, isNull, count } from "drizzle-orm";
@@ -33,6 +34,8 @@ export interface IStorage {
 
   getIntelligencePosts(): Promise<IntelligencePost[]>;
   createIntelligencePost(post: InsertIntelligencePost): Promise<IntelligencePost>;
+  toggleFavorite(userId: string, intelId: number): Promise<boolean>;
+  getFavorites(userId: string): Promise<number[]>;
 
   getChatSessions(userId: string): Promise<ChatSession[]>;
   createChatSession(session: InsertChatSession): Promise<ChatSession>;
@@ -155,6 +158,22 @@ export class DatabaseStorage implements IStorage {
   async createIntelligencePost(post: InsertIntelligencePost): Promise<IntelligencePost> {
     const [result] = await db.insert(intelligencePosts).values(post).returning();
     return result;
+  }
+
+  async toggleFavorite(userId: string, intelId: number): Promise<boolean> {
+    const [existing] = await db.select().from(userFavorites).where(and(eq(userFavorites.userId, userId), eq(userFavorites.intelId, intelId)));
+    if (existing) {
+      await db.delete(userFavorites).where(eq(userFavorites.id, existing.id));
+      return false;
+    } else {
+      await db.insert(userFavorites).values({ userId, intelId });
+      return true;
+    }
+  }
+
+  async getFavorites(userId: string): Promise<number[]> {
+    const results = await db.select().from(userFavorites).where(eq(userFavorites.userId, userId));
+    return results.map(r => r.intelId);
   }
 
   async getChatSessions(userId: string): Promise<ChatSession[]> {
