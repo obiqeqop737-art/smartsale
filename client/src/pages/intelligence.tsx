@@ -232,7 +232,6 @@ export default function IntelligencePage() {
                       <Icon className={`h-2.5 w-2.5 ${cfg.color}`} />
                       <span className={cfg.color}>{cfg.label}</span>
                     </div>
-                    <span className="text-[10px] text-slate-400 dark:text-slate-600 whitespace-nowrap">{formatDate(post.publishedAt)}</span>
                   </div>
                   <h3 className="mb-2 text-sm font-semibold leading-snug text-slate-800 dark:text-white">{post.title}</h3>
                   <p className="mb-3 text-xs leading-relaxed text-slate-500 dark:text-slate-400 line-clamp-3">{post.summary}</p>
@@ -249,9 +248,12 @@ export default function IntelligencePage() {
                       ))}
                     </div>
                   )}
-                  <div className="mt-3 flex items-center gap-1 text-[10px] text-slate-400 dark:text-slate-600">
-                    <ExternalLink className="h-2.5 w-2.5" />
-                    来源: {post.source}
+                  <div className="mt-3 flex items-center justify-between gap-1 text-[10px] text-slate-400 dark:text-slate-600">
+                    <div className="flex items-center gap-1">
+                      <ExternalLink className="h-2.5 w-2.5" />
+                      来源: {post.source}
+                    </div>
+                    <span>{formatDate(post.publishedAt)}</span>
                   </div>
                 </div>
               </div>
