@@ -4,6 +4,8 @@ import { queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import {
   FileText,
   Sparkles,
@@ -79,11 +81,11 @@ export default function SummaryPage() {
   };
 
   const handleExport = () => {
-    const blob = new Blob([summaryContent], { type: "text/plain;charset=utf-8" });
+    const blob = new Blob([summaryContent], { type: "text/markdown;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `工作日报_${new Date().toISOString().slice(0, 10)}.txt`;
+    a.download = `工作日报_${new Date().toISOString().slice(0, 10)}.md`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -272,8 +274,8 @@ export default function SummaryPage() {
               </div>
             ) : (
               <ScrollArea className="h-full">
-                <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap text-slate-600 dark:text-slate-300 leading-relaxed" data-testid="text-summary-content">
-                  {summaryContent}
+                <div className="p-1 prose prose-sm dark:prose-invert max-w-none prose-headings:text-slate-800 dark:prose-headings:text-blue-200 prose-h1:text-xl prose-h1:border-b prose-h1:border-blue-500/20 prose-h1:pb-2 prose-h2:text-base prose-h2:text-blue-600 dark:prose-h2:text-blue-300 prose-h3:text-sm prose-strong:text-slate-700 dark:prose-strong:text-blue-200 prose-li:text-slate-600 dark:prose-li:text-slate-300 prose-p:text-slate-600 dark:prose-p:text-slate-300 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-hr:border-blue-500/15 leading-relaxed" data-testid="text-summary-content">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{summaryContent}</ReactMarkdown>
                 </div>
               </ScrollArea>
             )}
