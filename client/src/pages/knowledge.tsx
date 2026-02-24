@@ -31,6 +31,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import {
   Upload,
   FileText,
@@ -641,7 +643,9 @@ export default function KnowledgePage() {
                               : "glass-card"
                           }`}
                         >
-                          <div className="whitespace-pre-wrap">{msg.content}</div>
+                          <div className="prose prose-sm dark:prose-invert max-w-none prose-p:leading-relaxed prose-pre:bg-slate-800/50 prose-code:text-blue-400">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -651,7 +655,9 @@ export default function KnowledgePage() {
                           <Bot className="h-4 w-4 text-blue-400" />
                         </div>
                         <div className="max-w-[75%] rounded-lg glass-card px-4 py-3 text-sm leading-relaxed">
-                          <div className="whitespace-pre-wrap">{streamingContent}</div>
+                          <div className="prose prose-sm dark:prose-invert max-w-none prose-p:leading-relaxed prose-pre:bg-slate-800/50 prose-code:text-blue-400">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>{streamingContent}</ReactMarkdown>
+                          </div>
                         </div>
                       </div>
                     )}
