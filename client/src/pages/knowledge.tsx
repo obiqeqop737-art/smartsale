@@ -164,8 +164,8 @@ function FolderTree({
             </div>
           ) : (
             <>
-              <span className="flex-1 truncate text-xs text-slate-300">{folder.name}</span>
-              <span className="text-[10px] text-slate-600">{fileCount}</span>
+              <span className="flex-1 truncate text-xs text-slate-600 dark:text-slate-300">{folder.name}</span>
+              <span className="text-[10px] text-slate-400 dark:text-slate-600">{fileCount}</span>
               <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button
                   onClick={(e) => {
@@ -220,7 +220,7 @@ function FolderTree({
       >
         <Folder className="h-4 w-4 text-blue-400/70" />
         <span>所有文件</span>
-        <span className="ml-auto text-[10px] text-slate-600">{files.length}</span>
+        <span className="ml-auto text-[10px] text-slate-400 dark:text-slate-600">{files.length}</span>
       </button>
       {rootFolders.map((folder) => renderFolder(folder, 0))}
     </div>
@@ -461,7 +461,7 @@ export default function KnowledgePage() {
     <div className="flex h-full" data-testid="page-knowledge">
       <div className={`${showPanel ? "flex w-72 md:w-72" : "hidden"} flex-col gap-3 p-3 border-r border-blue-500/10 max-md:absolute max-md:inset-y-0 max-md:left-0 max-md:z-30 max-md:w-64 max-md:glass-sidebar`}>
         <div className="flex items-center justify-between px-1">
-          <span className="text-xs font-semibold text-blue-300/80 uppercase tracking-wider">目录导航</span>
+          <span className="text-xs font-semibold text-blue-600/80 dark:text-blue-300/80 uppercase tracking-wider">目录导航</span>
           <div className="flex gap-1">
             <Button
               variant="ghost"
@@ -495,7 +495,7 @@ export default function KnowledgePage() {
           />
 
           <div className="mt-3 border-t border-blue-500/10 pt-3">
-            <span className="px-2 text-[10px] font-medium text-slate-600 uppercase tracking-wider">
+            <span className="px-2 text-[10px] font-medium text-slate-400 dark:text-slate-600 uppercase tracking-wider">
               {selectedFolderId ? "当前目录文件" : "所有文件"} ({displayFiles.length})
             </span>
             <div className="mt-1 space-y-0.5">
@@ -507,8 +507,8 @@ export default function KnowledgePage() {
                 >
                   <File className="h-3.5 w-3.5 shrink-0 text-blue-400/50" />
                   <div className="flex-1 overflow-hidden">
-                    <p className="truncate text-xs text-slate-300">{f.fileName}</p>
-                    <p className="text-[10px] text-slate-600">{formatFileSize(f.fileSize)}</p>
+                    <p className="truncate text-xs text-slate-600 dark:text-slate-300">{f.fileName}</p>
+                    <p className="text-[10px] text-slate-400 dark:text-slate-600">{formatFileSize(f.fileSize)}</p>
                   </div>
                   <button
                     className="p-0.5 opacity-0 group-hover:opacity-100 text-slate-500 hover:text-red-400 transition-all"
@@ -520,7 +520,7 @@ export default function KnowledgePage() {
                 </div>
               ))}
               {displayFiles.length === 0 && (
-                <div className="py-6 text-center text-slate-600">
+                <div className="py-6 text-center text-slate-400 dark:text-slate-600">
                   <FileText className="mx-auto mb-1 h-6 w-6 opacity-30" />
                   <p className="text-xs">暂无文件</p>
                 </div>
@@ -531,7 +531,7 @@ export default function KnowledgePage() {
 
         <div className="border-t border-blue-500/10 pt-3">
           <div className="flex items-center justify-between px-1 mb-2">
-            <span className="text-[10px] font-medium text-slate-600 uppercase tracking-wider">对话列表</span>
+            <span className="text-[10px] font-medium text-slate-400 dark:text-slate-600 uppercase tracking-wider">对话列表</span>
             <button
               onClick={() => createSessionMutation.mutate()}
               className="text-blue-400/60 hover:text-blue-400"
@@ -542,7 +542,7 @@ export default function KnowledgePage() {
           </div>
           <ScrollArea className="max-h-[160px]">
             {sessions.length === 0 ? (
-              <div className="py-4 text-center text-slate-600">
+              <div className="py-4 text-center text-slate-400 dark:text-slate-600">
                 <MessageSquare className="mx-auto mb-1 h-5 w-5 opacity-30" />
                 <p className="text-[10px]">暂无对话</p>
               </div>
@@ -584,8 +584,8 @@ export default function KnowledgePage() {
             <div className="h-20 w-20 rounded-full bg-blue-500/5 border border-blue-500/15 flex items-center justify-center mb-6">
               <Bot className="h-10 w-10 text-blue-500/30" />
             </div>
-            <h3 className="mb-2 text-lg font-medium text-slate-300">开始一个新对话</h3>
-            <p className="mb-6 max-w-sm text-sm text-slate-500">
+            <h3 className="mb-2 text-lg font-medium text-slate-600 dark:text-slate-300">开始一个新对话</h3>
+            <p className="mb-6 max-w-sm text-sm text-slate-400 dark:text-slate-500">
               基于您的个人知识库进行精准问答，涵盖历史报价、合同规范和客户记录
             </p>
             <Button
@@ -612,7 +612,7 @@ export default function KnowledgePage() {
                 ) : messages.length === 0 && !streamingContent ? (
                   <div className="flex flex-col items-center justify-center py-16 text-center">
                     <Bot className="mb-3 h-10 w-10 text-blue-500/20" />
-                    <p className="text-sm text-slate-500">向 AI 提出您的问题</p>
+                    <p className="text-sm text-slate-400 dark:text-slate-500">向 AI 提出您的问题</p>
                   </div>
                 ) : (
                   <>
@@ -696,14 +696,14 @@ export default function KnowledgePage() {
       <Dialog open={folderDialogOpen} onOpenChange={setFolderDialogOpen}>
         <DialogContent className="glass-dialog border-blue-500/20 sm:max-w-md">
           <DialogHeader className="glass-dialog-header -mx-6 -mt-6 px-6 py-4 rounded-t-lg">
-            <DialogTitle className="flex items-center gap-2 text-blue-200">
+            <DialogTitle className="flex items-center gap-2 text-blue-700 dark:text-blue-200">
               <FolderPlus className="h-4 w-4 text-blue-400" />
               新建文件夹
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 pt-2">
             <div>
-              <label className="mb-1.5 block text-xs text-slate-400">文件夹名称</label>
+              <label className="mb-1.5 block text-xs text-slate-500 dark:text-slate-400">文件夹名称</label>
               <Input
                 placeholder="输入文件夹名称"
                 value={newFolderName}
@@ -713,7 +713,7 @@ export default function KnowledgePage() {
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-xs text-slate-400">所属目录层级</label>
+              <label className="mb-1.5 block text-xs text-slate-500 dark:text-slate-400">所属目录层级</label>
               <Select value={newFolderParentId} onValueChange={setNewFolderParentId}>
                 <SelectTrigger className="glass-input text-slate-200" data-testid="select-folder-parent">
                   <SelectValue placeholder="选择父级目录" />
@@ -762,14 +762,14 @@ export default function KnowledgePage() {
       <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
         <DialogContent className="glass-dialog border-blue-500/20 sm:max-w-lg">
           <DialogHeader className="glass-dialog-header -mx-6 -mt-6 px-6 py-4 rounded-t-lg">
-            <DialogTitle className="flex items-center gap-2 text-blue-200">
+            <DialogTitle className="flex items-center gap-2 text-blue-700 dark:text-blue-200">
               <Upload className="h-4 w-4 text-blue-400" />
               上传文档
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 pt-2">
             <div>
-              <label className="mb-1.5 block text-xs text-slate-400">上传至目录</label>
+              <label className="mb-1.5 block text-xs text-slate-500 dark:text-slate-400">上传至目录</label>
               <Select value={uploadTargetFolderId} onValueChange={setUploadTargetFolderId}>
                 <SelectTrigger className="glass-input text-slate-200" data-testid="select-upload-folder">
                   <SelectValue placeholder="选择目标文件夹" />
@@ -808,8 +808,8 @@ export default function KnowledgePage() {
                 data-testid="input-file-upload"
               />
               <Upload className="mx-auto mb-2 h-8 w-8 text-blue-400/40" />
-              <p className="text-sm text-slate-400">点击选择文件或拖拽至此</p>
-              <p className="text-xs text-slate-600 mt-1">支持 PDF / DOCX / TXT，最大 10MB</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">点击选择文件或拖拽至此</p>
+              <p className="text-xs text-slate-400 dark:text-slate-600 mt-1">支持 PDF / DOCX / TXT，最大 10MB</p>
             </div>
 
             {uploadFiles.length > 0 && (
@@ -820,8 +820,8 @@ export default function KnowledgePage() {
                     <div key={idx} className="flex items-center gap-2 glass-card rounded-md p-2">
                       <File className="h-4 w-4 shrink-0 text-blue-400/50" />
                       <div className="flex-1 min-w-0">
-                        <p className="truncate text-xs text-slate-300">{file.name}</p>
-                        <p className="text-[10px] text-slate-600">{formatFileSize(file.size)}</p>
+                        <p className="truncate text-xs text-slate-600 dark:text-slate-300">{file.name}</p>
+                        <p className="text-[10px] text-slate-400 dark:text-slate-600">{formatFileSize(file.size)}</p>
                         {progress !== undefined && (
                           <div className="mt-1 h-1 rounded-full bg-slate-800 overflow-hidden">
                             <div
@@ -886,8 +886,8 @@ export default function KnowledgePage() {
       <AlertDialog open={deleteFileId !== null} onOpenChange={(open) => !open && setDeleteFileId(null)}>
         <AlertDialogContent className="glass-dialog border-blue-500/20">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-blue-200">确认删除文件</AlertDialogTitle>
-            <AlertDialogDescription className="text-slate-400">
+            <AlertDialogTitle className="text-blue-700 dark:text-blue-200">确认删除文件</AlertDialogTitle>
+            <AlertDialogDescription className="text-slate-500 dark:text-slate-400">
               此操作将从知识库中永久删除该文件，且无法恢复。确定要继续吗？
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -907,8 +907,8 @@ export default function KnowledgePage() {
       <AlertDialog open={deleteFolderId !== null} onOpenChange={(open) => !open && setDeleteFolderId(null)}>
         <AlertDialogContent className="glass-dialog border-blue-500/20">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-blue-200">确认删除文件夹</AlertDialogTitle>
-            <AlertDialogDescription className="text-slate-400">
+            <AlertDialogTitle className="text-blue-700 dark:text-blue-200">确认删除文件夹</AlertDialogTitle>
+            <AlertDialogDescription className="text-slate-500 dark:text-slate-400">
               删除文件夹将同时删除其下所有子文件夹。文件夹中的文件将移动到根目录。确定要继续吗？
             </AlertDialogDescription>
           </AlertDialogHeader>

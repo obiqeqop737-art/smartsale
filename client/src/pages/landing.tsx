@@ -74,7 +74,7 @@ function AnimatedCounter({ target, suffix = "" }: { target: number; suffix?: str
 
   return (
     <div ref={ref} className="text-center">
-      <div className="text-3xl sm:text-4xl font-bold text-white">
+      <div className="text-3xl sm:text-4xl font-bold text-slate-800 dark:text-white">
         {val.toLocaleString()}{suffix}
       </div>
     </div>
@@ -92,7 +92,7 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen relative overflow-hidden">
       <div className="fixed inset-0 -z-10">
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-blue-950/30 to-slate-950" />
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50 dark:from-slate-950 dark:via-blue-950/30 dark:to-slate-950" />
         <div className="absolute top-0 right-1/4 w-[600px] h-[600px] rounded-full bg-blue-500/5 blur-[150px]" />
         <div className="absolute bottom-0 left-1/4 w-[500px] h-[500px] rounded-full bg-blue-600/4 blur-[120px]" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-blue-400/3 blur-[180px]" />
@@ -104,7 +104,7 @@ export default function LandingPage() {
             <div className="flex h-9 w-9 items-center justify-center rounded-lg glow-btn">
               <Brain className="h-5 w-5 text-white" />
             </div>
-            <span className="text-lg font-bold tracking-tight text-white">DocuMind AI</span>
+            <span className="text-lg font-bold tracking-tight text-slate-800 dark:text-white">DocuMind AI</span>
           </div>
           <Button asChild className="glow-btn text-white border-0" data-testid="button-login">
             <a href="/api/login">
@@ -120,13 +120,13 @@ export default function LandingPage() {
           <div className="mx-auto max-w-3xl">
             <div className="inline-flex items-center gap-2 rounded-full glass-card px-4 py-1.5 mb-6">
               <Sparkles className="h-3.5 w-3.5 text-blue-400" />
-              <span className="text-xs text-blue-300/80">Powered by Gemini 3.1 · RAG Architecture</span>
+              <span className="text-xs text-blue-500/80 dark:text-blue-300/80">Powered by Gemini 3.1 · RAG Architecture</span>
             </div>
-            <h1 className="text-4xl font-bold leading-tight tracking-tight sm:text-5xl lg:text-6xl text-white">
+            <h1 className="text-4xl font-bold leading-tight tracking-tight sm:text-5xl lg:text-6xl text-slate-800 dark:text-white">
               企业级智能
               <span className="glow-text"> 文档管理平台</span>
             </h1>
-            <p className="mt-6 text-lg leading-relaxed text-slate-400 sm:text-xl">
+            <p className="mt-6 text-lg leading-relaxed text-slate-500 dark:text-slate-400 sm:text-xl">
               融合 RAG 检索增强生成与 Gemini 大模型，三级目录层级管理，
               为每位用户构建专属 AI 知识助手。
             </p>
@@ -163,16 +163,16 @@ export default function LandingPage() {
 
       <section className="py-20 relative">
         <div className="mx-auto max-w-6xl px-6">
-          <h2 className="mb-4 text-center text-2xl font-bold sm:text-3xl text-white">核心功能</h2>
-          <p className="mb-12 text-center text-slate-500">六大模块，全方位赋能企业团队</p>
+          <h2 className="mb-4 text-center text-2xl font-bold sm:text-3xl text-slate-800 dark:text-white">核心功能</h2>
+          <p className="mb-12 text-center text-slate-400 dark:text-slate-500">六大模块，全方位赋能企业团队</p>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {features.map((f) => (
               <div key={f.title} className="glass-card glass-card-hover rounded-xl p-6 transition-all duration-300 group">
                 <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10 border border-blue-500/20 transition-all group-hover:border-blue-500/40 group-hover:shadow-[0_0_15px_rgba(56,130,246,0.15)]">
                   <f.icon className="h-5 w-5 text-blue-400" />
                 </div>
-                <h3 className="mb-2 text-lg font-semibold text-white">{f.title}</h3>
-                <p className="text-sm leading-relaxed text-slate-400">{f.desc}</p>
+                <h3 className="mb-2 text-lg font-semibold text-slate-800 dark:text-white">{f.title}</h3>
+                <p className="text-sm leading-relaxed text-slate-500 dark:text-slate-400">{f.desc}</p>
               </div>
             ))}
           </div>
@@ -181,8 +181,8 @@ export default function LandingPage() {
 
       <section className="py-20 relative">
         <div className="mx-auto max-w-6xl px-6">
-          <h2 className="mb-4 text-center text-2xl font-bold sm:text-3xl text-white">使用流程</h2>
-          <p className="mb-12 text-center text-slate-500">四步开启智能文档管理</p>
+          <h2 className="mb-4 text-center text-2xl font-bold sm:text-3xl text-slate-800 dark:text-white">使用流程</h2>
+          <p className="mb-12 text-center text-slate-400 dark:text-slate-500">四步开启智能文档管理</p>
           <div className="grid gap-6 md:grid-cols-4">
             {steps.map((step, idx) => (
               <div key={step.num} className="relative group">
@@ -191,8 +191,8 @@ export default function LandingPage() {
                   <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500/10 border border-blue-500/20 group-hover:border-blue-500/40 transition-all">
                     <step.icon className="h-6 w-6 text-blue-400" />
                   </div>
-                  <h3 className="mb-2 text-base font-semibold text-white">{step.title}</h3>
-                  <p className="text-xs leading-relaxed text-slate-500">{step.desc}</p>
+                  <h3 className="mb-2 text-base font-semibold text-slate-800 dark:text-white">{step.title}</h3>
+                  <p className="text-xs leading-relaxed text-slate-400 dark:text-slate-500">{step.desc}</p>
                 </div>
                 {idx < steps.length - 1 && (
                   <div className="hidden md:flex absolute top-1/2 -right-3 transform -translate-y-1/2 z-10">
@@ -210,10 +210,10 @@ export default function LandingPage() {
           <div className="glass-card rounded-2xl p-8 md:p-12 text-center relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-blue-400/10 to-blue-500/5" />
             <div className="relative">
-              <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">
+              <h2 className="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-white mb-4">
                 准备好提升您的工作效率了吗？
               </h2>
-              <p className="text-slate-400 mb-8 max-w-xl mx-auto">
+              <p className="text-slate-500 dark:text-slate-400 mb-8 max-w-xl mx-auto">
                 加入 DocuMind AI，让 AI 成为您的智能文档助手，轻松管理知识库、追踪行业情报、高效完成每日工作。
               </p>
               <div className="flex flex-wrap items-center justify-center gap-4">

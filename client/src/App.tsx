@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppSidebar } from "@/components/app-sidebar";
 import { TopBar } from "@/components/top-bar";
 import { useAuth } from "@/hooks/use-auth";
+import { ThemeProvider } from "@/hooks/use-theme";
 import NotFound from "@/pages/not-found";
 import LandingPage from "@/pages/landing";
 import DashboardPage from "@/pages/dashboard";
@@ -60,15 +61,15 @@ function AuthenticatedApp() {
         <>
           <button
             onClick={() => setMobileMenuOpen(true)}
-            className="fixed top-3 left-3 z-50 flex h-9 w-9 items-center justify-center rounded-lg glass-card text-blue-400"
+            className="fixed top-1.5 left-3 z-[70] flex h-9 w-9 items-center justify-center rounded-lg bg-white/50 dark:bg-slate-900/50 backdrop-blur border border-blue-500/15 text-blue-500 dark:text-blue-400"
             data-testid="button-mobile-menu"
           >
             <Menu className="h-5 w-5" />
           </button>
           {mobileMenuOpen && (
-            <div className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)}>
+            <div className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)}>
               <div className="h-full w-60" onClick={(e) => e.stopPropagation()}>
-                <AppSidebar user={user} collapsed={false} onToggle={() => setMobileMenuOpen(false)} />
+                <AppSidebar user={user} collapsed={false} onToggle={() => setMobileMenuOpen(false)} onNavigate={() => setMobileMenuOpen(false)} />
               </div>
             </div>
           )}
@@ -97,12 +98,14 @@ function AuthenticatedApp() {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <AuthenticatedApp />
-      </TooltipProvider>
-    </QueryClientProvider>
+    <ThemeProvider>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <AuthenticatedApp />
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }
 

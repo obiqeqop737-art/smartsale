@@ -109,21 +109,21 @@ export default function SummaryPage() {
   return (
     <div className="flex h-full" data-testid="page-summary">
       {showHistory && (
-        <div className="w-64 shrink-0 border-r border-blue-500/10 flex flex-col bg-slate-950/30 hidden md:flex" data-testid="summary-history-sidebar">
+        <div className="w-64 shrink-0 border-r border-blue-500/10 flex-col bg-slate-50/50 dark:bg-slate-950/30 hidden md:flex" data-testid="summary-history-sidebar">
           <div className="px-4 py-3 border-b border-blue-500/10 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Clock className="h-3.5 w-3.5 text-blue-400" />
-              <span className="text-sm font-medium text-blue-200">历史日报</span>
+              <span className="text-sm font-medium text-blue-700 dark:text-blue-200">历史日报</span>
             </div>
-            <span className="text-[10px] text-slate-600">{historyList.length} 份</span>
+            <span className="text-[10px] text-slate-400 dark:text-slate-600">{historyList.length} 份</span>
           </div>
           <ScrollArea className="flex-1">
             <div className="p-2 space-y-1">
               {historyList.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-10 text-center">
                   <FileText className="h-8 w-8 text-blue-500/15 mb-2" />
-                  <p className="text-xs text-slate-600">暂无历史日报</p>
-                  <p className="text-[10px] text-slate-700 mt-1">生成日报后将保存在此处</p>
+                  <p className="text-xs text-slate-400 dark:text-slate-600">暂无历史日报</p>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-700 mt-1">生成日报后将保存在此处</p>
                 </div>
               ) : (
                 historyList.map((item) => (
@@ -139,10 +139,10 @@ export default function SummaryPage() {
                   >
                     <div className="flex items-center gap-2">
                       <Calendar className="h-3 w-3 text-blue-400 shrink-0" />
-                      <span className="text-xs font-medium text-slate-300">{formatHistoryDate(item.date)}</span>
-                      <span className="text-[10px] text-slate-600">{formatHistoryDay(item.date)}</span>
+                      <span className="text-xs font-medium text-slate-600 dark:text-slate-300">{formatHistoryDate(item.date)}</span>
+                      <span className="text-[10px] text-slate-400 dark:text-slate-600">{formatHistoryDay(item.date)}</span>
                     </div>
-                    <p className="mt-1.5 text-[10px] text-slate-500 line-clamp-2 pl-5">
+                    <p className="mt-1.5 text-[10px] text-slate-400 dark:text-slate-500 line-clamp-2 pl-5">
                       {item.content.slice(0, 80)}...
                     </p>
                   </button>
@@ -156,13 +156,13 @@ export default function SummaryPage() {
       <div className="flex-1 flex flex-col p-4 md:p-6">
         <div className="mb-4 md:mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-4">
           <div>
-            <h1 className="flex items-center gap-2 text-xl font-bold text-white">
+            <h1 className="flex items-center gap-2 text-xl font-bold text-slate-800 dark:text-white">
               <div className="h-8 w-8 rounded-lg bg-blue-500/15 border border-blue-500/20 flex items-center justify-center">
                 <FileText className="h-4 w-4 text-blue-400" />
               </div>
               每日工作 AI 总结
             </h1>
-            <p className="mt-1 text-sm text-slate-500">一键生成结构化工作日报</p>
+            <p className="mt-1 text-sm text-slate-400 dark:text-slate-500">一键生成结构化工作日报</p>
           </div>
           <div className="flex gap-2">
             {summaryContent && (
@@ -211,7 +211,7 @@ export default function SummaryPage() {
           <div className="glass-dialog-header px-6 py-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <FileText className="h-4 w-4 text-blue-400" />
-              <span className="text-sm font-medium text-blue-200">
+              <span className="text-sm font-medium text-blue-700 dark:text-blue-200">
                 {selectedHistoryId
                   ? `历史日报 - ${historyList.find(h => h.id === selectedHistoryId)?.date || ""}`
                   : `工作日报 - ${new Date().toLocaleDateString("zh-CN", {
@@ -242,8 +242,8 @@ export default function SummaryPage() {
                 <div className="h-20 w-20 rounded-full bg-blue-500/5 border border-blue-500/15 flex items-center justify-center mb-6">
                   <FileText className="h-10 w-10 text-blue-500/20" />
                 </div>
-                <h3 className="mb-2 text-lg font-medium text-slate-300">点击生成您的工作日报</h3>
-                <p className="mb-6 max-w-md text-sm text-slate-500">
+                <h3 className="mb-2 text-lg font-medium text-slate-600 dark:text-slate-300">点击生成您的工作日报</h3>
+                <p className="mb-6 max-w-md text-sm text-slate-400 dark:text-slate-500">
                   AI 将自动读取您今天的已完成任务、情报浏览记录和知识库交互，生成一份结构化的工作总结
                 </p>
                 <Button
@@ -257,7 +257,7 @@ export default function SummaryPage() {
               </div>
             ) : generateMutation.isPending && !summaryContent ? (
               <div className="space-y-6 py-8">
-                <div className="flex items-center gap-3 text-sm text-blue-300/70">
+                <div className="flex items-center gap-3 text-sm text-blue-500/70 dark:text-blue-300/70">
                   <Loader2 className="h-4 w-4 animate-spin text-blue-400" />
                   正在读取您的工作数据并生成日报...
                 </div>
@@ -272,7 +272,7 @@ export default function SummaryPage() {
               </div>
             ) : (
               <ScrollArea className="h-full">
-                <div className="prose prose-sm prose-invert max-w-none whitespace-pre-wrap text-slate-300 leading-relaxed" data-testid="text-summary-content">
+                <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap text-slate-600 dark:text-slate-300 leading-relaxed" data-testid="text-summary-content">
                   {summaryContent}
                 </div>
               </ScrollArea>

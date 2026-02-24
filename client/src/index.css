@@ -151,7 +151,7 @@
   }
 }
 
-.glass-card {
+.dark .glass-card {
   background: rgba(15, 23, 42, 0.6);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -159,19 +159,39 @@
   box-shadow: 0 0 20px rgba(56, 130, 246, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
-.glass-card-hover:hover {
+.glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(56, 130, 246, 0.12);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.dark .glass-card-hover:hover {
   border-color: rgba(56, 130, 246, 0.3);
   box-shadow: 0 0 30px rgba(56, 130, 246, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
-.glass-sidebar {
+.glass-card-hover:hover {
+  border-color: rgba(56, 130, 246, 0.25);
+  box-shadow: 0 2px 8px rgba(56, 130, 246, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.dark .glass-sidebar {
   background: rgba(10, 18, 35, 0.75);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-right: 1px solid rgba(56, 130, 246, 0.12);
 }
 
-.glass-dialog {
+.glass-sidebar {
+  background: rgba(248, 250, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-right: 1px solid rgba(56, 130, 246, 0.1);
+}
+
+.dark .glass-dialog {
   background: rgba(12, 20, 40, 0.85);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
@@ -179,21 +199,47 @@
   box-shadow: 0 0 40px rgba(56, 130, 246, 0.08), 0 25px 50px -12px rgba(0, 0, 0, 0.4);
 }
 
-.glass-dialog-header {
+.glass-dialog {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(56, 130, 246, 0.15);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+}
+
+.dark .glass-dialog-header {
   background: linear-gradient(135deg, rgba(56, 130, 246, 0.15) 0%, rgba(30, 58, 138, 0.2) 100%);
   border-bottom: 1px solid rgba(56, 130, 246, 0.15);
 }
 
-.glass-input {
+.glass-dialog-header {
+  background: linear-gradient(135deg, rgba(56, 130, 246, 0.08) 0%, rgba(30, 58, 138, 0.06) 100%);
+  border-bottom: 1px solid rgba(56, 130, 246, 0.1);
+}
+
+.dark .glass-input {
   background: rgba(15, 23, 42, 0.5);
   backdrop-filter: blur(8px);
   border: 1px solid rgba(56, 130, 246, 0.15);
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.glass-input:focus {
+.glass-input {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(56, 130, 246, 0.15);
+  transition: border-color 0.2s, box-shadow 0.2s;
+  color: hsl(220 15% 12%);
+}
+
+.dark .glass-input:focus {
   border-color: rgba(56, 130, 246, 0.4);
   box-shadow: 0 0 12px rgba(56, 130, 246, 0.15);
+}
+
+.glass-input:focus {
+  border-color: rgba(56, 130, 246, 0.4);
+  box-shadow: 0 0 8px rgba(56, 130, 246, 0.1);
 }
 
 .glow-line {
@@ -219,14 +265,24 @@
   box-shadow: 0 0 8px rgba(56, 130, 246, 0.6);
 }
 
-.glow-border {
+.dark .glow-border {
   border: 1px solid rgba(56, 130, 246, 0.2);
   box-shadow: 0 0 15px rgba(56, 130, 246, 0.05);
 }
 
-.glow-border-active {
+.glow-border {
+  border: 1px solid rgba(56, 130, 246, 0.15);
+  box-shadow: 0 1px 3px rgba(56, 130, 246, 0.04);
+}
+
+.dark .glow-border-active {
   border-color: rgba(56, 130, 246, 0.45);
   box-shadow: 0 0 25px rgba(56, 130, 246, 0.15);
+}
+
+.glow-border-active {
+  border-color: rgba(56, 130, 246, 0.35);
+  box-shadow: 0 1px 6px rgba(56, 130, 246, 0.1);
 }
 
 .glow-text {
@@ -286,11 +342,19 @@
   background: rgba(56, 130, 246, 0.05) !important;
 }
 
-.glass-toast {
+.dark .glass-toast {
   background: rgba(12, 20, 40, 0.9) !important;
   backdrop-filter: blur(16px) !important;
   -webkit-backdrop-filter: blur(16px) !important;
   border: 1px solid rgba(56, 130, 246, 0.2) !important;
+}
+
+.glass-toast {
+  background: rgba(255, 255, 255, 0.92) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border: 1px solid rgba(56, 130, 246, 0.15) !important;
+  color: hsl(220 15% 12%) !important;
 }
 
 .tree-connector {

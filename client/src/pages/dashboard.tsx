@@ -174,13 +174,13 @@ export default function DashboardPage() {
     <div className="p-4 md:p-6 space-y-6" data-testid="page-dashboard">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-3">
+          <h1 className="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-3">
             <div className="h-9 w-9 rounded-lg bg-blue-500/15 border border-blue-500/20 flex items-center justify-center">
               <Brain className="h-5 w-5 text-blue-400" />
             </div>
             工作台
           </h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-slate-400 dark:text-slate-500">
             {new Date().toLocaleDateString("zh-CN", { year: "numeric", month: "long", day: "numeric", weekday: "long" })}
           </p>
         </div>
@@ -194,12 +194,12 @@ export default function DashboardPage() {
               <div className={`absolute inset-0 bg-gradient-to-br ${card.color} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
               <div className="relative flex items-start justify-between">
                 <div>
-                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">{card.label}</p>
-                  <p className="mt-2 text-3xl font-bold text-white">
+                  <p className="text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider">{card.label}</p>
+                  <p className="mt-2 text-3xl font-bold text-slate-800 dark:text-white">
                     <AnimatedNumber target={card.value} />
                     {card.suffix && <span className="text-lg ml-0.5">{card.suffix}</span>}
                   </p>
-                  <p className="mt-1 text-xs text-slate-500">{card.sub}</p>
+                  <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">{card.sub}</p>
                 </div>
                 <div className={`h-10 w-10 rounded-lg ${card.iconBg} border flex items-center justify-center transition-all group-hover:scale-110`}>
                   <card.icon className={`h-5 w-5 ${card.iconColor}`} />
@@ -215,7 +215,7 @@ export default function DashboardPage() {
           <div className="glass-dialog-header px-5 py-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <KanbanSquare className="h-4 w-4 text-blue-400" />
-              <span className="text-sm font-medium text-blue-200">待办任务</span>
+              <span className="text-sm font-medium text-blue-700 dark:text-blue-200">待办任务</span>
             </div>
             <Link href="/tasks">
               <Button variant="ghost" size="sm" className="text-xs text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 h-7 px-2" data-testid="link-view-all-tasks">
@@ -228,20 +228,20 @@ export default function DashboardPage() {
               {(!stats?.recentTasks || stats.recentTasks.length === 0) ? (
                 <div className="flex flex-col items-center justify-center py-10 text-center">
                   <CheckCircle2 className="h-10 w-10 text-emerald-500/20 mb-3" />
-                  <p className="text-sm text-slate-500">暂无待办任务</p>
+                  <p className="text-sm text-slate-400 dark:text-slate-500">暂无待办任务</p>
                 </div>
               ) : (
                 stats.recentTasks.map((task) => (
                   <div key={task.id} className="flex items-start gap-3 rounded-lg p-3 hover:bg-blue-500/5 transition-colors group" data-testid={`task-item-${task.id}`}>
                     <div className={`mt-0.5 h-2 w-2 rounded-full shrink-0 ${task.status === "in_progress" ? "bg-blue-400 animate-pulse" : "bg-slate-600"}`} />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-slate-300 truncate">{task.title}</p>
+                      <p className="text-sm text-slate-600 dark:text-slate-300 truncate">{task.title}</p>
                       <div className="flex items-center gap-2 mt-1">
                         <Badge variant="outline" className={`text-[10px] h-4 px-1.5 ${priorityColors[task.priority] || priorityColors.medium}`}>
                           {task.priority === "high" ? "高" : task.priority === "low" ? "低" : "中"}
                         </Badge>
                         {task.dueDate && (
-                          <span className="text-[10px] text-slate-600 flex items-center gap-0.5">
+                          <span className="text-[10px] text-slate-400 dark:text-slate-600 flex items-center gap-0.5">
                             <Calendar className="h-2.5 w-2.5" />
                             {new Date(task.dueDate).toLocaleDateString("zh-CN", { month: "short", day: "numeric" })}
                           </span>
@@ -259,7 +259,7 @@ export default function DashboardPage() {
           <div className="glass-dialog-header px-5 py-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <FileText className="h-4 w-4 text-blue-400" />
-              <span className="text-sm font-medium text-blue-200">最近文档</span>
+              <span className="text-sm font-medium text-blue-700 dark:text-blue-200">最近文档</span>
             </div>
             <Link href="/knowledge">
               <Button variant="ghost" size="sm" className="text-xs text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 h-7 px-2" data-testid="link-view-all-files">
@@ -272,7 +272,7 @@ export default function DashboardPage() {
               {(!stats?.recentFiles || stats.recentFiles.length === 0) ? (
                 <div className="flex flex-col items-center justify-center py-10 text-center">
                   <FolderTree className="h-10 w-10 text-blue-500/20 mb-3" />
-                  <p className="text-sm text-slate-500">暂无文档</p>
+                  <p className="text-sm text-slate-400 dark:text-slate-500">暂无文档</p>
                   <Link href="/knowledge">
                     <Button variant="ghost" size="sm" className="mt-2 text-xs text-blue-400">去上传</Button>
                   </Link>
@@ -284,8 +284,8 @@ export default function DashboardPage() {
                       <FileText className="h-4 w-4 text-blue-400" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-slate-300 truncate">{file.fileName}</p>
-                      <p className="text-[10px] text-slate-600 mt-0.5">
+                      <p className="text-sm text-slate-600 dark:text-slate-300 truncate">{file.fileName}</p>
+                      <p className="text-[10px] text-slate-400 dark:text-slate-600 mt-0.5">
                         {formatFileSize(file.fileSize)} · {formatTime(file.uploadedAt)}
                       </p>
                     </div>
@@ -300,7 +300,7 @@ export default function DashboardPage() {
           <div className="glass-dialog-header px-5 py-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Radar className="h-4 w-4 text-blue-400" />
-              <span className="text-sm font-medium text-blue-200">最新情报</span>
+              <span className="text-sm font-medium text-blue-700 dark:text-blue-200">最新情报</span>
             </div>
             <Link href="/intelligence">
               <Button variant="ghost" size="sm" className="text-xs text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 h-7 px-2" data-testid="link-view-all-intel">
@@ -313,17 +313,17 @@ export default function DashboardPage() {
               {(!stats?.recentIntel || stats.recentIntel.length === 0) ? (
                 <div className="flex flex-col items-center justify-center py-10 text-center">
                   <Radar className="h-10 w-10 text-purple-500/20 mb-3" />
-                  <p className="text-sm text-slate-500">暂无情报</p>
+                  <p className="text-sm text-slate-400 dark:text-slate-500">暂无情报</p>
                 </div>
               ) : (
                 stats.recentIntel.map((post) => (
                   <Link key={post.id} href="/intelligence">
                     <div className="rounded-lg p-3 hover:bg-blue-500/5 transition-colors cursor-pointer" data-testid={`intel-item-${post.id}`}>
-                      <p className="text-sm text-slate-300 line-clamp-2">{post.title}</p>
+                      <p className="text-sm text-slate-600 dark:text-slate-300 line-clamp-2">{post.title}</p>
                       <div className="flex items-center gap-2 mt-1.5">
-                        <span className="text-[10px] text-slate-600">{post.source}</span>
+                        <span className="text-[10px] text-slate-400 dark:text-slate-600">{post.source}</span>
                         <span className="text-[10px] text-slate-700">·</span>
-                        <span className="text-[10px] text-slate-600">{formatTime(post.publishedAt)}</span>
+                        <span className="text-[10px] text-slate-400 dark:text-slate-600">{formatTime(post.publishedAt)}</span>
                       </div>
                     </div>
                   </Link>
@@ -338,7 +338,7 @@ export default function DashboardPage() {
         <div className="glass-card rounded-xl overflow-hidden" data-testid="section-activity">
           <div className="glass-dialog-header px-5 py-3 flex items-center gap-2">
             <Clock className="h-4 w-4 text-blue-400" />
-            <span className="text-sm font-medium text-blue-200">今日动态</span>
+            <span className="text-sm font-medium text-blue-700 dark:text-blue-200">今日动态</span>
             <Badge variant="outline" className="ml-2 text-[10px] h-5 bg-blue-500/10 text-blue-400 border-blue-500/20">
               {stats.recentActivity.length} 条记录
             </Badge>
@@ -354,8 +354,8 @@ export default function DashboardPage() {
                       <Icon className={`h-3.5 w-3.5 ${modColor}`} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs text-slate-400 truncate">{activity.detail || activity.action}</p>
-                      <p className="text-[10px] text-slate-600">{formatTime(activity.createdAt)}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{activity.detail || activity.action}</p>
+                      <p className="text-[10px] text-slate-400 dark:text-slate-600">{formatTime(activity.createdAt)}</p>
                     </div>
                   </div>
                 );

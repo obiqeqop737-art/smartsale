@@ -19,9 +19,10 @@ interface AppSidebarProps {
   user: User;
   collapsed: boolean;
   onToggle: () => void;
+  onNavigate?: () => void;
 }
 
-export function AppSidebar({ user, collapsed, onToggle }: AppSidebarProps) {
+export function AppSidebar({ user, collapsed, onToggle, onNavigate }: AppSidebarProps) {
   const [location] = useLocation();
 
   const { data: tasksData } = useQuery<Task[]>({ queryKey: ["/api/tasks"] });
@@ -39,7 +40,7 @@ export function AppSidebar({ user, collapsed, onToggle }: AppSidebarProps) {
     <aside
       className={`glass-sidebar flex flex-col transition-all duration-300 ${
         collapsed ? "w-16" : "w-60"
-      } shrink-0`}
+      } shrink-0 relative z-30`}
       data-testid="sidebar"
     >
       <div className="flex items-center gap-3 px-4 py-4">
@@ -48,8 +49,8 @@ export function AppSidebar({ user, collapsed, onToggle }: AppSidebarProps) {
         </div>
         {!collapsed && (
           <div className="flex flex-col overflow-hidden">
-            <span className="text-sm font-bold tracking-tight text-white">DocuMind AI</span>
-            <span className="text-[10px] text-blue-300/60">智能文档管理平台</span>
+            <span className="text-sm font-bold tracking-tight text-slate-800 dark:text-white">DocuMind AI</span>
+            <span className="text-[10px] text-blue-500/60 dark:text-blue-300/60">智能文档管理平台</span>
           </div>
         )}
       </div>
@@ -61,14 +62,15 @@ export function AppSidebar({ user, collapsed, onToggle }: AppSidebarProps) {
           const linkContent = (
             <Link
               href={item.url}
+              onClick={() => onNavigate?.()}
               data-testid={`nav-${item.url === "/" ? "dashboard" : item.url.slice(1)}`}
               className={`flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-200 group ${
                 isActive
-                  ? "glow-border-active bg-blue-500/10 text-blue-300"
-                  : "text-slate-400 hover:text-blue-300 hover:bg-blue-500/5 hover:glow-border"
+                  ? "glow-border-active bg-blue-500/10 text-blue-600 dark:text-blue-300"
+                  : "text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-300 hover:bg-blue-500/5 hover:glow-border"
               }`}
             >
-              <item.icon className={`h-4 w-4 shrink-0 ${isActive ? "text-blue-400" : "text-slate-500 group-hover:text-blue-400"}`} />
+              <item.icon className={`h-4 w-4 shrink-0 ${isActive ? "text-blue-500 dark:text-blue-400" : "text-slate-400 dark:text-slate-500 group-hover:text-blue-500 dark:group-hover:text-blue-400"}`} />
               {!collapsed && (
                 <>
                   <span className="text-sm truncate flex-1">{item.title}</span>
@@ -112,10 +114,10 @@ export function AppSidebar({ user, collapsed, onToggle }: AppSidebarProps) {
           </Avatar>
           {!collapsed && (
             <div className="flex flex-1 flex-col overflow-hidden">
-              <span className="truncate text-sm font-medium text-slate-200">
+              <span className="truncate text-sm font-medium text-slate-700 dark:text-slate-200">
                 {user.firstName ? `${user.firstName} ${user.lastName || ""}` : user.email}
               </span>
-              <span className="truncate text-[10px] text-slate-500">{user.email}</span>
+              <span className="truncate text-[10px] text-slate-400 dark:text-slate-500">{user.email}</span>
             </div>
           )}
           <Button

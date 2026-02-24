@@ -210,13 +210,13 @@ export default function TasksPage() {
     <div className="flex h-full flex-col p-4 md:p-6" data-testid="page-tasks">
       <div className="mb-4 md:mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-4">
         <div>
-          <h1 className="flex items-center gap-2 text-xl font-bold text-white">
+          <h1 className="flex items-center gap-2 text-xl font-bold text-slate-800 dark:text-white">
             <div className="h-8 w-8 rounded-lg bg-blue-500/15 border border-blue-500/20 flex items-center justify-center">
               <KanbanSquare className="h-4 w-4 text-blue-400" />
             </div>
             任务看板
           </h1>
-          <p className="mt-1 text-sm text-slate-500">管理销售任务和跟进计划</p>
+          <p className="mt-1 text-sm text-slate-400 dark:text-slate-500">管理销售任务和跟进计划</p>
         </div>
         <Button
           onClick={() => {
@@ -238,8 +238,8 @@ export default function TasksPage() {
             <KanbanSquare className="h-4 w-4 text-blue-400" />
           </div>
           <div>
-            <p className="text-lg font-bold text-white" data-testid="text-stat-total">{taskStats.total}</p>
-            <p className="text-[10px] text-slate-500">总任务</p>
+            <p className="text-lg font-bold text-slate-800 dark:text-white" data-testid="text-stat-total">{taskStats.total}</p>
+            <p className="text-[10px] text-slate-400 dark:text-slate-500">总任务</p>
           </div>
         </div>
         <div className="glass-card rounded-lg px-4 py-3 flex items-center gap-3">
@@ -247,8 +247,8 @@ export default function TasksPage() {
             <ListTodo className="h-4 w-4 text-slate-400" />
           </div>
           <div>
-            <p className="text-lg font-bold text-white" data-testid="text-stat-todo">{taskStats.todo}</p>
-            <p className="text-[10px] text-slate-500">待办</p>
+            <p className="text-lg font-bold text-slate-800 dark:text-white" data-testid="text-stat-todo">{taskStats.todo}</p>
+            <p className="text-[10px] text-slate-400 dark:text-slate-500">待办</p>
           </div>
         </div>
         <div className="glass-card rounded-lg px-4 py-3 flex items-center gap-3">
@@ -256,8 +256,8 @@ export default function TasksPage() {
             <Clock className="h-4 w-4 text-blue-400" />
           </div>
           <div>
-            <p className="text-lg font-bold text-white" data-testid="text-stat-in-progress">{taskStats.inProgress}</p>
-            <p className="text-[10px] text-slate-500">进行中</p>
+            <p className="text-lg font-bold text-slate-800 dark:text-white" data-testid="text-stat-in-progress">{taskStats.inProgress}</p>
+            <p className="text-[10px] text-slate-400 dark:text-slate-500">进行中</p>
           </div>
         </div>
         <div className="glass-card rounded-lg px-4 py-3 flex items-center gap-3">
@@ -265,15 +265,15 @@ export default function TasksPage() {
             <CheckCircle2 className="h-4 w-4 text-emerald-400" />
           </div>
           <div>
-            <p className="text-lg font-bold text-white" data-testid="text-stat-done">{taskStats.done}</p>
-            <p className="text-[10px] text-slate-500">已完成</p>
+            <p className="text-lg font-bold text-slate-800 dark:text-white" data-testid="text-stat-done">{taskStats.done}</p>
+            <p className="text-[10px] text-slate-400 dark:text-slate-500">已完成</p>
           </div>
         </div>
       </div>
 
       <div className="mb-4 flex items-center gap-2" data-testid="task-filters">
         <Filter className="h-3.5 w-3.5 text-slate-600" />
-        <span className="text-xs text-slate-600 mr-1">优先级:</span>
+        <span className="text-xs text-slate-400 dark:text-slate-600 mr-1">优先级:</span>
         {[
           { key: null, label: "全部" },
           { key: "high", label: "高", color: "text-red-400" },
@@ -325,7 +325,7 @@ export default function TasksPage() {
                     <div className={`h-2 w-2 rounded-full ${col.key === "todo" ? "bg-slate-400" : col.key === "in_progress" ? "bg-blue-400 animate-glow-pulse" : "bg-emerald-400"}`} />
                     <span className={`text-sm font-semibold ${col.color}`}>{col.label}</span>
                   </div>
-                  <span className="rounded-full bg-blue-500/10 border border-blue-500/15 px-2 py-0.5 text-[10px] text-blue-300/70">
+                  <span className="rounded-full bg-blue-500/10 border border-blue-500/15 px-2 py-0.5 text-[10px] text-blue-500/70 dark:text-blue-300/70">
                     {colTasks.length}
                   </span>
                 </div>
@@ -347,13 +347,13 @@ export default function TasksPage() {
                         >
                           <div className="mb-2 flex items-start justify-between gap-2">
                             <GripVertical className="mt-0.5 h-3 w-3 shrink-0 text-slate-700 group-hover:text-blue-400/40" />
-                            <h4 className="flex-1 text-sm font-medium leading-snug text-white">{task.title}</h4>
+                            <h4 className="flex-1 text-sm font-medium leading-snug text-slate-800 dark:text-white">{task.title}</h4>
                             <div className={`shrink-0 rounded-full border px-1.5 py-0.5 text-[10px] ${prio.bgColor} ${prio.color}`}>
                               {prio.label}
                             </div>
                           </div>
                           {task.description && (
-                            <p className="mb-2 text-xs leading-relaxed text-slate-500 line-clamp-2">{task.description}</p>
+                            <p className="mb-2 text-xs leading-relaxed text-slate-400 dark:text-slate-500 line-clamp-2">{task.description}</p>
                           )}
                           <div className="flex flex-wrap items-center gap-2">
                             {task.dueDate && (
@@ -365,7 +365,7 @@ export default function TasksPage() {
                               </span>
                             )}
                             {task.assignedBy && (
-                              <span className="text-[10px] text-slate-600">指派: {task.assignedBy}</span>
+                              <span className="text-[10px] text-slate-400 dark:text-slate-600">指派: {task.assignedBy}</span>
                             )}
                           </div>
                           <div className="mt-2 flex items-center justify-between">
@@ -412,7 +412,7 @@ export default function TasksPage() {
                     {colTasks.length === 0 && (
                       <div className="flex flex-col items-center justify-center py-12 text-center">
                         <KanbanSquare className="mb-2 h-8 w-8 text-blue-500/10" />
-                        <p className="text-xs text-slate-600">暂无任务</p>
+                        <p className="text-xs text-slate-400 dark:text-slate-600">暂无任务</p>
                       </div>
                     )}
                   </div>
@@ -426,14 +426,14 @@ export default function TasksPage() {
       <Dialog open={dialogOpen || editingTask !== null} onOpenChange={(open) => { if (!open) { setDialogOpen(false); setEditingTask(null); } }}>
         <DialogContent className="glass-dialog border-blue-500/20 sm:max-w-md">
           <DialogHeader className="glass-dialog-header -mx-6 -mt-6 px-6 py-4 rounded-t-lg">
-            <DialogTitle className="flex items-center gap-2 text-blue-200">
+            <DialogTitle className="flex items-center gap-2 text-blue-700 dark:text-blue-200">
               <KanbanSquare className="h-4 w-4 text-blue-400" />
               {editingTask ? "编辑任务" : "新建任务"}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 pt-2">
             <div>
-              <label className="mb-1.5 block text-xs text-slate-400">任务标题</label>
+              <label className="mb-1.5 block text-xs text-slate-500 dark:text-slate-400">任务标题</label>
               <Input
                 placeholder="任务标题"
                 value={newTask.title}
@@ -443,7 +443,7 @@ export default function TasksPage() {
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-xs text-slate-400">任务描述</label>
+              <label className="mb-1.5 block text-xs text-slate-500 dark:text-slate-400">任务描述</label>
               <Textarea
                 placeholder="任务描述 (可选)"
                 value={newTask.description}
@@ -454,7 +454,7 @@ export default function TasksPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="mb-1.5 block text-xs text-slate-400">优先级</label>
+                <label className="mb-1.5 block text-xs text-slate-500 dark:text-slate-400">优先级</label>
                 <Select value={newTask.priority} onValueChange={(v) => setNewTask({ ...newTask, priority: v })}>
                   <SelectTrigger className="glass-input text-slate-200" data-testid="select-task-priority">
                     <SelectValue />
@@ -467,7 +467,7 @@ export default function TasksPage() {
                 </Select>
               </div>
               <div>
-                <label className="mb-1.5 block text-xs text-slate-400">截止日期</label>
+                <label className="mb-1.5 block text-xs text-slate-500 dark:text-slate-400">截止日期</label>
                 <Input
                   type="date"
                   value={newTask.dueDate}
@@ -478,7 +478,7 @@ export default function TasksPage() {
               </div>
             </div>
             <div>
-              <label className="mb-1.5 block text-xs text-slate-400">指派人</label>
+              <label className="mb-1.5 block text-xs text-slate-500 dark:text-slate-400">指派人</label>
               <Input
                 placeholder="指派人 (可选)"
                 value={newTask.assignedBy}
@@ -512,8 +512,8 @@ export default function TasksPage() {
       <AlertDialog open={deleteTaskId !== null} onOpenChange={(open) => !open && setDeleteTaskId(null)}>
         <AlertDialogContent className="glass-dialog border-blue-500/20">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-blue-200">确认删除任务</AlertDialogTitle>
-            <AlertDialogDescription className="text-slate-400">此操作将永久删除该任务，且无法恢复。确定要继续吗？</AlertDialogDescription>
+            <AlertDialogTitle className="text-blue-700 dark:text-blue-200">确认删除任务</AlertDialogTitle>
+            <AlertDialogDescription className="text-slate-500 dark:text-slate-400">此操作将永久删除该任务，且无法恢复。确定要继续吗？</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel className="text-slate-400 border-blue-500/15 hover:bg-blue-500/10">取消</AlertDialogCancel>

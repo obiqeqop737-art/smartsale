@@ -76,13 +76,13 @@ export default function IntelligencePage() {
     <div className="flex h-full flex-col p-4 md:p-6" data-testid="page-intelligence">
       <div className="mb-4 md:mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-4">
         <div>
-          <h1 className="flex items-center gap-2 text-xl font-bold text-white">
+          <h1 className="flex items-center gap-2 text-xl font-bold text-slate-800 dark:text-white">
             <div className="h-8 w-8 rounded-lg bg-blue-500/15 border border-blue-500/20 flex items-center justify-center">
               <Radar className="h-4 w-4 text-blue-400" />
             </div>
             情报雷达
           </h1>
-          <p className="mt-1 text-sm text-slate-500">锂电池及新能源行业实时情报追踪</p>
+          <p className="mt-1 text-sm text-slate-400 dark:text-slate-500">锂电池及新能源行业实时情报追踪</p>
         </div>
         <div className="relative w-full md:w-64">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
@@ -91,7 +91,7 @@ export default function IntelligencePage() {
             placeholder="搜索情报标题、摘要、标签..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full h-9 pl-9 pr-8 rounded-lg text-sm glass-input text-slate-300 placeholder:text-slate-600"
+            className="w-full h-9 pl-9 pr-8 rounded-lg text-sm glass-input text-slate-600 dark:text-slate-300 placeholder:text-slate-400 dark:placeholder:text-slate-600"
             data-testid="input-intel-search"
           />
           {searchQuery && (
@@ -145,10 +145,10 @@ export default function IntelligencePage() {
       ) : filteredPosts.length === 0 ? (
         <div className="flex flex-1 flex-col items-center justify-center text-center py-16">
           <Radar className="mb-4 h-16 w-16 text-blue-500/15" />
-          <h3 className="mb-2 text-lg font-medium text-slate-400">
+          <h3 className="mb-2 text-lg font-medium text-slate-500 dark:text-slate-400">
             {searchQuery || activeCategory ? "未找到匹配的情报" : "暂无情报"}
           </h3>
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-slate-400 dark:text-slate-600">
             {searchQuery || activeCategory ? "请尝试调整筛选条件" : "情报数据正在加载中..."}
           </p>
           {(searchQuery || activeCategory) && (
@@ -188,24 +188,24 @@ export default function IntelligencePage() {
                       <Icon className={`h-2.5 w-2.5 ${cfg.color}`} />
                       <span className={cfg.color}>{cfg.label}</span>
                     </div>
-                    <span className="text-[10px] text-slate-600">{formatDate(post.publishedAt)}</span>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-600">{formatDate(post.publishedAt)}</span>
                   </div>
-                  <h3 className="mb-2 text-sm font-semibold leading-snug text-white">{post.title}</h3>
-                  <p className="mb-3 text-xs leading-relaxed text-slate-400 line-clamp-3">{post.summary}</p>
+                  <h3 className="mb-2 text-sm font-semibold leading-snug text-slate-800 dark:text-white">{post.title}</h3>
+                  <p className="mb-3 text-xs leading-relaxed text-slate-500 dark:text-slate-400 line-clamp-3">{post.summary}</p>
                   <div className="flex items-start gap-2 rounded-lg bg-blue-500/5 border border-blue-500/10 p-3">
                     <Sparkles className="mt-0.5 h-3 w-3 shrink-0 text-blue-400 animate-glow-pulse" />
-                    <p className="text-xs font-medium leading-relaxed text-blue-300 line-clamp-2">{post.aiInsight}</p>
+                    <p className="text-xs font-medium leading-relaxed text-blue-600 dark:text-blue-300 line-clamp-2">{post.aiInsight}</p>
                   </div>
                   {post.tags && post.tags.length > 0 && (
                     <div className="mt-3 flex flex-wrap gap-1">
                       {post.tags.map((tag) => (
-                        <span key={tag} className="rounded-md bg-blue-500/8 border border-blue-500/10 px-1.5 py-0.5 text-[10px] text-blue-300/70">
+                        <span key={tag} className="rounded-md bg-blue-500/8 border border-blue-500/10 px-1.5 py-0.5 text-[10px] text-blue-500/70 dark:text-blue-300/70">
                           {tag}
                         </span>
                       ))}
                     </div>
                   )}
-                  <div className="mt-3 flex items-center gap-1 text-[10px] text-slate-600">
+                  <div className="mt-3 flex items-center gap-1 text-[10px] text-slate-400 dark:text-slate-600">
                     <ExternalLink className="h-2.5 w-2.5" />
                     来源: {post.source}
                   </div>
@@ -221,7 +221,7 @@ export default function IntelligencePage() {
           <DialogContent className="glass-dialog border-blue-500/20 sm:max-w-2xl max-h-[80vh] overflow-auto">
             <DialogHeader className="glass-dialog-header -mx-6 -mt-6 px-6 py-4 rounded-t-lg">
               <div className="flex items-center justify-between">
-                <DialogTitle className="text-blue-200 pr-8">{selectedPost.title}</DialogTitle>
+                <DialogTitle className="text-blue-700 dark:text-blue-200 pr-8">{selectedPost.title}</DialogTitle>
               </div>
               <div className="flex items-center gap-3 mt-2">
                 {(() => {
@@ -234,30 +234,30 @@ export default function IntelligencePage() {
                     </div>
                   );
                 })()}
-                <span className="text-xs text-slate-500">{formatDate(selectedPost.publishedAt)}</span>
-                <span className="text-xs text-slate-600">来源: {selectedPost.source}</span>
+                <span className="text-xs text-slate-400 dark:text-slate-500">{formatDate(selectedPost.publishedAt)}</span>
+                <span className="text-xs text-slate-400 dark:text-slate-600">来源: {selectedPost.source}</span>
               </div>
             </DialogHeader>
             <div className="space-y-4 pt-2">
               <div>
-                <h4 className="text-xs font-medium text-slate-500 mb-2">情报摘要</h4>
-                <p className="text-sm leading-relaxed text-slate-300">{selectedPost.summary}</p>
+                <h4 className="text-xs font-medium text-slate-400 dark:text-slate-500 mb-2">情报摘要</h4>
+                <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">{selectedPost.summary}</p>
               </div>
               {selectedPost.aiInsight && (
                 <div className="rounded-lg bg-blue-500/5 border border-blue-500/15 p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <Sparkles className="h-4 w-4 text-blue-400" />
-                    <h4 className="text-xs font-medium text-blue-300">AI 商业洞察</h4>
+                    <h4 className="text-xs font-medium text-blue-600 dark:text-blue-300">AI 商业洞察</h4>
                   </div>
-                  <p className="text-sm leading-relaxed text-blue-200/80">{selectedPost.aiInsight}</p>
+                  <p className="text-sm leading-relaxed text-blue-700/80 dark:text-blue-200/80">{selectedPost.aiInsight}</p>
                 </div>
               )}
               {selectedPost.tags && selectedPost.tags.length > 0 && (
                 <div>
-                  <h4 className="text-xs font-medium text-slate-500 mb-2">标签</h4>
+                  <h4 className="text-xs font-medium text-slate-400 dark:text-slate-500 mb-2">标签</h4>
                   <div className="flex flex-wrap gap-1.5">
                     {selectedPost.tags.map((tag) => (
-                      <span key={tag} className="rounded-md bg-blue-500/10 border border-blue-500/15 px-2 py-0.5 text-xs text-blue-300/70">
+                      <span key={tag} className="rounded-md bg-blue-500/10 border border-blue-500/15 px-2 py-0.5 text-xs text-blue-500/70 dark:text-blue-300/70">
                         {tag}
                       </span>
                     ))}
