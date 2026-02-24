@@ -1,5 +1,5 @@
 import {
-  folders, knowledgeFiles, tasks, intelligencePosts, chatSessions, chatMessages, activityLogs, dailySummaries, userFavorites,
+  folders, knowledgeFiles, tasks, intelligencePosts, chatSessions, chatMessages, activityLogs, dailySummaries, userFavorites, handoverLogs,
   type Folder, type InsertFolder,
   type KnowledgeFile, type InsertKnowledgeFile,
   type Task, type InsertTask,
@@ -9,9 +9,11 @@ import {
   type DailySummary, type InsertDailySummary,
   type ActivityLog, type InsertActivityLog,
   type UserFavorite, type InsertUserFavorite,
+  type HandoverLog, type InsertHandoverLog,
 } from "@shared/schema";
+import { users, type User } from "@shared/models/auth";
 import { db } from "./db";
-import { eq, and, desc, gte, sql, isNull, count } from "drizzle-orm";
+import { eq, and, desc, gte, sql, isNull, count, ne } from "drizzle-orm";
 
 export interface IStorage {
   getFolders(userId: string): Promise<Folder[]>;
@@ -61,6 +63,11 @@ export interface IStorage {
     recentIntel: IntelligencePost[];
     recentActivity: ActivityLog[];
   }>;
+
+  getAllUsers(): Promise<User[]>;
+  getUserAssetCounts(userId: string): Promise<{ files: number; folders: number; tasks: number; chatSessions: number }>;
+  transferAssets(fromUserId: string, toUserId: string, operatorId: string, note?: string): Promise<HandoverLog>;
+  getHandoverLogs(): Promise<HandoverLog[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -244,6 +251,50 @@ export class DatabaseStorage implements IStorage {
       recentIntel: allIntel.slice(0, 4),
       recentActivity: todayActivity.slice(0, 8),
     };
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return db.select().from(users).orderBy(desc(users.createdAt));
+  }
+
+  async getUserAssetCounts(userId: string) {
+    const userFiles = await db.select().from(knowledgeFiles).where(eq(knowledgeFiles.userId, userId));
+    const userFolders = await db.select().from(folders).where(eq(folders.userId, userId));
+    const pendingTasks = await db.select().from(tasks).where(and(eq(tasks.userId, userId), ne(tasks.status, "done")));
+    const userSessions = await db.select().from(chatSessions).where(eq(chatSessions.userId, userId));
+    return {
+      files: userFiles.length,
+      folders: userFolders.length,
+      tasks: pendingTasks.length,
+      chatSessions: userSessions.length,
+    };
+  }
+
+  async transferAssets(fromUserId: string, toUserId: string, operatorId: string, note?: string): Promise<HandoverLog> {
+    const counts = await this.getUserAssetCounts(fromUserId);
+
+    await db.update(knowledgeFiles).set({ userId: toUserId }).where(eq(knowledgeFiles.userId, fromUserId));
+    await db.update(folders).set({ userId: toUserId }).where(eq(folders.userId, fromUserId));
+    await db.update(tasks).set({ userId: toUserId }).where(and(eq(tasks.userId, fromUserId), ne(tasks.status, "done")));
+    await db.update(chatSessions).set({ userId: toUserId }).where(eq(chatSessions.userId, fromUserId));
+    await db.update(chatMessages).set({ userId: toUserId }).where(eq(chatMessages.userId, fromUserId));
+
+    const [log] = await db.insert(handoverLogs).values({
+      fromUserId,
+      toUserId,
+      operatorId,
+      filesTransferred: counts.files,
+      foldersTransferred: counts.folders,
+      tasksTransferred: counts.tasks,
+      chatSessionsTransferred: counts.chatSessions,
+      note: note || null,
+    }).returning();
+
+    return log;
+  }
+
+  async getHandoverLogs(): Promise<HandoverLog[]> {
+    return db.select().from(handoverLogs).orderBy(desc(handoverLogs.createdAt));
   }
 }
 

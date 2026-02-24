@@ -15,6 +15,8 @@ import KnowledgePage from "@/pages/knowledge";
 import IntelligencePage from "@/pages/intelligence";
 import TasksPage from "@/pages/tasks";
 import SummaryPage from "@/pages/summary";
+import AdminPage from "@/pages/admin";
+import PluginsPage from "@/pages/plugins";
 import { Menu } from "lucide-react";
 
 function useIsMobile() {
@@ -88,6 +90,8 @@ function AuthenticatedApp() {
             <Route path="/intelligence" component={IntelligencePage} />
             <Route path="/tasks" component={TasksPage} />
             <Route path="/summary" component={SummaryPage} />
+            <Route path="/admin" component={AdminPage} />
+            <Route path="/plugins" component={PluginsPage} />
             <Route component={NotFound} />
           </Switch>
         </main>

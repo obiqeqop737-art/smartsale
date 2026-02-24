@@ -19,12 +19,16 @@ An enterprise document management platform built with Express + React + PostgreS
 - `intelligence_posts` - Industry intel feed (seeded, lithium battery/new energy)
 - `chat_sessions` / `chat_messages` - AI chat history
 - `activity_logs` - User activity tracking for daily summary
+- `user_favorites` - Intelligence post bookmarks per user
+- `handover_logs` - Asset transfer records (admin handover center)
 
 ## Key Features
 - **Knowledge Base**: 3-level folder tree, file upload with batch progress, RAG AI chat
 - **Intelligence Radar**: News cards with detail dialog, AI insights, favorite/share
 - **Task Kanban**: Drag-drop columns, edit/delete dialogs, priority badges, deadline alerts
 - **Daily Summary**: AI-generated structured sales daily report with copy/export
+- **Admin Handover Center**: One-click asset transfer (files, tasks, chats) between users for resignation/transfer
+- **Plugin Hub**: Grid layout with simulated enterprise plugin cards, connect/disconnect interactions
 - **Mobile Responsive**: Sidebar overlay, collapsible panels, horizontal scroll kanban
 
 ## CSS Classes (Glassmorphism)
@@ -39,17 +43,17 @@ An enterprise document management platform built with Express + React + PostgreS
 ## Project Structure
 ```
 client/src/
-  pages/         - Landing, Knowledge, Intelligence, Tasks, Summary
+  pages/         - Landing, Knowledge, Intelligence, Tasks, Summary, Admin, Plugins
   components/    - AppSidebar (custom glassmorphism sidebar), UI components
-  hooks/         - useAuth
+  hooks/         - useAuth, useTheme
 server/
-  routes.ts      - All API endpoints (folders, files, tasks, chat, summary)
-  storage.ts     - DatabaseStorage with all CRUD
+  routes.ts      - All API endpoints (folders, files, tasks, chat, summary, admin)
+  storage.ts     - DatabaseStorage with all CRUD + admin operations
   seed.ts        - Intelligence posts seed data
   db.ts          - PostgreSQL connection
   replit_integrations/  - Auth, Chat, Image modules
 shared/
-  schema.ts      - All Drizzle schemas (folders, knowledge_files, tasks, etc.)
+  schema.ts      - All Drizzle schemas (folders, knowledge_files, tasks, handover_logs, etc.)
   models/        - Auth schema
 ```
 
@@ -63,3 +67,7 @@ shared/
 - Rebuilt all pages: landing, knowledge, intelligence, tasks, summary
 - Added mobile responsive support with sidebar overlay and panel toggles
 - Added task edit/delete, intelligence detail dialog, batch file upload
+- Added Handover Center (Admin module) with user management, asset transfer drawer, handover logs
+- Added Plugin Hub with 8 simulated plugin cards, connect/disconnect dialogs, green breathing light
+- Added sidebar bottom nav section with "扩展" label for Plugins and Admin
+- Added handover_logs table to track asset transfers between users

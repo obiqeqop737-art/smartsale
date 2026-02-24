@@ -1,6 +1,6 @@
 import { useLocation, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { Brain, Radar, KanbanSquare, FileText, LogOut, ChevronLeft, ChevronRight, LayoutDashboard } from "lucide-react";
+import { Brain, Radar, KanbanSquare, FileText, LogOut, ChevronLeft, ChevronRight, LayoutDashboard, Puzzle, Shield } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -13,6 +13,11 @@ const navItems = [
   { title: "情报雷达", url: "/intelligence", altUrl: null, icon: Radar, desc: "行业情报追踪", badgeKey: "intel" },
   { title: "任务看板", url: "/tasks", altUrl: null, icon: KanbanSquare, desc: "任务管理", badgeKey: "tasks" },
   { title: "每日总结", url: "/summary", altUrl: null, icon: FileText, desc: "AI工作日报", badgeKey: null },
+];
+
+const bottomNavItems = [
+  { title: "插件中心", url: "/plugins", altUrl: null, icon: Puzzle, desc: "接入企业生态插件", badgeKey: null as string | null },
+  { title: "超管台", url: "/admin", altUrl: null, icon: Shield, desc: "用户管理与资产交接", badgeKey: null },
 ];
 
 interface AppSidebarProps {
@@ -103,6 +108,47 @@ export function AppSidebar({ user, collapsed, onToggle, onNavigate }: AppSidebar
           return <div key={item.title}>{linkContent}</div>;
         })}
       </nav>
+
+      <div className="px-2 space-y-1 mb-2">
+        {!collapsed && (
+          <div className="px-3 pt-3 pb-1">
+            <span className="text-[10px] font-medium text-slate-400/60 dark:text-slate-600 uppercase tracking-widest">扩展</span>
+          </div>
+        )}
+        {bottomNavItems.map((item) => {
+          const isActive = location === item.url || location === item.altUrl;
+          const navLink = (
+            <Link
+              href={item.url}
+              onClick={() => onNavigate?.()}
+              data-testid={`nav-${item.url.slice(1)}`}
+              className={`flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-200 group ${
+                isActive
+                  ? "glow-border-active bg-blue-500/10 text-blue-600 dark:text-blue-300"
+                  : "text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-300 hover:bg-blue-500/5 hover:glow-border"
+              }`}
+            >
+              <item.icon className={`h-4 w-4 shrink-0 ${isActive ? "text-blue-500 dark:text-blue-400" : "text-slate-400 dark:text-slate-500 group-hover:text-blue-500 dark:group-hover:text-blue-400"}`} />
+              {!collapsed && <span className="text-sm truncate flex-1">{item.title}</span>}
+            </Link>
+          );
+
+          if (collapsed) {
+            return (
+              <Tooltip key={item.title} delayDuration={0}>
+                <TooltipTrigger asChild>
+                  <div className="relative">{navLink}</div>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="glass-dialog text-blue-200 border-blue-500/20">
+                  <p className="font-medium">{item.title}</p>
+                  <p className="text-xs text-blue-300/50">{item.desc}</p>
+                </TooltipContent>
+              </Tooltip>
+            );
+          }
+          return <div key={item.title}>{navLink}</div>;
+        })}
+      </div>
 
       <div className="mt-auto border-t border-blue-500/10 p-3">
         <div className="flex items-center gap-3">

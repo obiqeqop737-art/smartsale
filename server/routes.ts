@@ -530,5 +530,63 @@ ${activityInfo}
     }
   });
 
+  app.get("/api/admin/users", isAuthenticated, async (req: any, res) => {
+    try {
+      const allUsers = await storage.getAllUsers();
+      res.json(allUsers);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
+  app.get("/api/admin/users/:id/assets", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.params.id;
+      const counts = await storage.getUserAssetCounts(userId);
+      res.json(counts);
+    } catch (error) {
+      console.error("Error fetching user assets:", error);
+      res.status(500).json({ message: "Failed to fetch user assets" });
+    }
+  });
+
+  app.post("/api/admin/handover", isAuthenticated, async (req: any, res) => {
+    try {
+      const operatorId = req.user.claims.sub;
+      const { fromUserId, toUserId, note } = req.body;
+      if (!fromUserId || typeof fromUserId !== "string" || !toUserId || typeof toUserId !== "string") {
+        return res.status(400).json({ message: "Missing or invalid fromUserId or toUserId" });
+      }
+      if (note !== undefined && typeof note !== "string") {
+        return res.status(400).json({ message: "Invalid note format" });
+      }
+      if (fromUserId === toUserId) return res.status(400).json({ message: "Cannot transfer to the same user" });
+
+      const log = await storage.transferAssets(fromUserId, toUserId, operatorId, note);
+
+      await storage.createActivityLog({
+        userId: operatorId,
+        action: "handover",
+        detail: `资产交接: 从用户${fromUserId}转移至用户${toUserId}，包含${log.filesTransferred}份文件、${log.tasksTransferred}个任务`,
+        module: "admin",
+      });
+
+      res.json(log);
+    } catch (error) {
+      console.error("Error performing handover:", error);
+      res.status(500).json({ message: "Failed to perform handover" });
+    }
+  });
+
+  app.get("/api/admin/handover-logs", isAuthenticated, async (req: any, res) => {
+    try {
+      const logs = await storage.getHandoverLogs();
+      res.json(logs);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch handover logs" });
+    }
+  });
+
   return httpServer;
 }

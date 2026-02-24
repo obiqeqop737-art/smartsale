@@ -92,6 +92,19 @@ export const userFavorites = pgTable("user_favorites", {
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
 
+export const handoverLogs = pgTable("handover_logs", {
+  id: serial("id").primaryKey(),
+  fromUserId: varchar("from_user_id").notNull(),
+  toUserId: varchar("to_user_id").notNull(),
+  operatorId: varchar("operator_id").notNull(),
+  filesTransferred: integer("files_transferred").notNull().default(0),
+  foldersTransferred: integer("folders_transferred").notNull().default(0),
+  tasksTransferred: integer("tasks_transferred").notNull().default(0),
+  chatSessionsTransferred: integer("chat_sessions_transferred").notNull().default(0),
+  note: text("note"),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+});
+
 export const insertFolderSchema = createInsertSchema(folders).omit({ id: true, createdAt: true });
 export const insertKnowledgeFileSchema = createInsertSchema(knowledgeFiles).omit({ id: true, uploadedAt: true });
 export const insertTaskSchema = createInsertSchema(tasks).omit({ id: true, createdAt: true, completedAt: true });
@@ -101,6 +114,7 @@ export const insertChatMessageSchema = createInsertSchema(chatMessages).omit({ i
 export const insertDailySummarySchema = createInsertSchema(dailySummaries).omit({ id: true, createdAt: true });
 export const insertActivityLogSchema = createInsertSchema(activityLogs).omit({ id: true, createdAt: true });
 export const insertUserFavoriteSchema = createInsertSchema(userFavorites).omit({ id: true, createdAt: true });
+export const insertHandoverLogSchema = createInsertSchema(handoverLogs).omit({ id: true, createdAt: true });
 
 export type Folder = typeof folders.$inferSelect;
 export type InsertFolder = z.infer<typeof insertFolderSchema>;
@@ -120,3 +134,5 @@ export type ActivityLog = typeof activityLogs.$inferSelect;
 export type InsertActivityLog = z.infer<typeof insertActivityLogSchema>;
 export type UserFavorite = typeof userFavorites.$inferSelect;
 export type InsertUserFavorite = z.infer<typeof insertUserFavoriteSchema>;
+export type HandoverLog = typeof handoverLogs.$inferSelect;
+export type InsertHandoverLog = z.infer<typeof insertHandoverLogSchema>;
