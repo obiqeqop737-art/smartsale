@@ -227,12 +227,12 @@ export default function IntelligencePage() {
                       <Star className={`h-4 w-4 ${isFavorite ? "fill-amber-400" : ""}`} />
                     </button>
                   </div>
-                  <div className="mb-3 flex items-center justify-between gap-2">
+                  <div className="mb-3 flex items-center justify-between gap-2 pr-16">
                     <div className={`flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[10px] ${cfg.bgClass}`}>
                       <Icon className={`h-2.5 w-2.5 ${cfg.color}`} />
                       <span className={cfg.color}>{cfg.label}</span>
                     </div>
-                    <span className="text-[10px] text-slate-400 dark:text-slate-600">{formatDate(post.publishedAt)}</span>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-600 whitespace-nowrap">{formatDate(post.publishedAt)}</span>
                   </div>
                   <h3 className="mb-2 text-sm font-semibold leading-snug text-slate-800 dark:text-white">{post.title}</h3>
                   <p className="mb-3 text-xs leading-relaxed text-slate-500 dark:text-slate-400 line-clamp-3">{post.summary}</p>
