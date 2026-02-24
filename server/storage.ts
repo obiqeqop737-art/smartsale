@@ -1,5 +1,6 @@
 import {
-  knowledgeFiles, tasks, intelligencePosts, chatSessions, chatMessages, activityLogs,
+  folders, knowledgeFiles, tasks, intelligencePosts, chatSessions, chatMessages, activityLogs,
+  type Folder, type InsertFolder,
   type KnowledgeFile, type InsertKnowledgeFile,
   type Task, type InsertTask,
   type IntelligencePost, type InsertIntelligencePost,
@@ -8,17 +9,25 @@ import {
   type ActivityLog, type InsertActivityLog,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, gte, sql } from "drizzle-orm";
+import { eq, and, desc, gte, sql, isNull } from "drizzle-orm";
 
 export interface IStorage {
+  getFolders(userId: string): Promise<Folder[]>;
+  createFolder(folder: InsertFolder): Promise<Folder>;
+  renameFolder(id: number, userId: string, name: string): Promise<Folder | undefined>;
+  moveFolder(id: number, userId: string, parentId: number | null): Promise<Folder | undefined>;
+  deleteFolder(id: number, userId: string): Promise<void>;
+
   getKnowledgeFiles(userId: string): Promise<KnowledgeFile[]>;
   createKnowledgeFile(file: InsertKnowledgeFile): Promise<KnowledgeFile>;
   deleteKnowledgeFile(id: number, userId: string): Promise<void>;
   getKnowledgeFilesByUser(userId: string): Promise<KnowledgeFile[]>;
+  moveFile(id: number, userId: string, folderId: number | null): Promise<KnowledgeFile | undefined>;
 
   getTasks(userId: string): Promise<Task[]>;
   createTask(task: InsertTask): Promise<Task>;
   updateTask(id: number, userId: string, data: Partial<Task>): Promise<Task | undefined>;
+  deleteTask(id: number, userId: string): Promise<void>;
   getCompletedTasksToday(userId: string): Promise<Task[]>;
 
   getIntelligencePosts(): Promise<IntelligencePost[]>;
@@ -34,6 +43,42 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
+  async getFolders(userId: string): Promise<Folder[]> {
+    return db.select().from(folders).where(eq(folders.userId, userId)).orderBy(folders.sortOrder, folders.name);
+  }
+
+  async createFolder(folder: InsertFolder): Promise<Folder> {
+    const [result] = await db.insert(folders).values(folder).returning();
+    return result;
+  }
+
+  async renameFolder(id: number, userId: string, name: string): Promise<Folder | undefined> {
+    const [result] = await db.update(folders).set({ name }).where(and(eq(folders.id, id), eq(folders.userId, userId))).returning();
+    return result;
+  }
+
+  async moveFolder(id: number, userId: string, parentId: number | null): Promise<Folder | undefined> {
+    let newLevel = 1;
+    if (parentId) {
+      const [parent] = await db.select().from(folders).where(and(eq(folders.id, parentId), eq(folders.userId, userId)));
+      if (!parent) return undefined;
+      newLevel = parent.level + 1;
+      if (newLevel > 3) return undefined;
+    }
+    if (parentId === id) return undefined;
+    const [result] = await db.update(folders).set({ parentId, level: newLevel }).where(and(eq(folders.id, id), eq(folders.userId, userId))).returning();
+    return result;
+  }
+
+  async deleteFolder(id: number, userId: string): Promise<void> {
+    const childFolders = await db.select().from(folders).where(and(eq(folders.parentId, id), eq(folders.userId, userId)));
+    for (const child of childFolders) {
+      await this.deleteFolder(child.id, userId);
+    }
+    await db.update(knowledgeFiles).set({ folderId: null }).where(and(eq(knowledgeFiles.folderId, id), eq(knowledgeFiles.userId, userId)));
+    await db.delete(folders).where(and(eq(folders.id, id), eq(folders.userId, userId)));
+  }
+
   async getKnowledgeFiles(userId: string): Promise<KnowledgeFile[]> {
     return db.select().from(knowledgeFiles).where(eq(knowledgeFiles.userId, userId)).orderBy(desc(knowledgeFiles.uploadedAt));
   }
@@ -51,6 +96,11 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(knowledgeFiles).where(eq(knowledgeFiles.userId, userId));
   }
 
+  async moveFile(id: number, userId: string, folderId: number | null): Promise<KnowledgeFile | undefined> {
+    const [result] = await db.update(knowledgeFiles).set({ folderId }).where(and(eq(knowledgeFiles.id, id), eq(knowledgeFiles.userId, userId))).returning();
+    return result;
+  }
+
   async getTasks(userId: string): Promise<Task[]> {
     return db.select().from(tasks).where(eq(tasks.userId, userId)).orderBy(desc(tasks.createdAt));
   }
@@ -66,6 +116,10 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(tasks.id, id), eq(tasks.userId, userId)))
       .returning();
     return result;
+  }
+
+  async deleteTask(id: number, userId: string): Promise<void> {
+    await db.delete(tasks).where(and(eq(tasks.id, id), eq(tasks.userId, userId)));
   }
 
   async getCompletedTasksToday(userId: string): Promise<Task[]> {

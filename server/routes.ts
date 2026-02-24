@@ -23,6 +23,80 @@ export async function registerRoutes(
   await setupAuth(app);
   registerAuthRoutes(app);
 
+  app.get("/api/folders", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const userFolders = await storage.getFolders(userId);
+      res.json(userFolders);
+    } catch (error) {
+      console.error("Error fetching folders:", error);
+      res.status(500).json({ message: "Failed to fetch folders" });
+    }
+  });
+
+  app.post("/api/folders", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { name, parentId } = req.body;
+      let level = 1;
+      if (parentId) {
+        const parentFolders = await storage.getFolders(userId);
+        const parent = parentFolders.find((f: any) => f.id === parentId);
+        if (!parent) return res.status(404).json({ message: "Parent folder not found" });
+        level = parent.level + 1;
+        if (level > 3) return res.status(400).json({ message: "Maximum folder depth is 3 levels" });
+      }
+      const folder = await storage.createFolder({
+        userId,
+        name,
+        parentId: parentId || null,
+        level,
+        sortOrder: 0,
+      });
+      res.json(folder);
+    } catch (error) {
+      console.error("Error creating folder:", error);
+      res.status(500).json({ message: "Failed to create folder" });
+    }
+  });
+
+  app.patch("/api/folders/:id/rename", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const id = parseInt(req.params.id);
+      const { name } = req.body;
+      const folder = await storage.renameFolder(id, userId, name);
+      if (!folder) return res.status(404).json({ message: "Folder not found" });
+      res.json(folder);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to rename folder" });
+    }
+  });
+
+  app.patch("/api/folders/:id/move", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const id = parseInt(req.params.id);
+      const { parentId } = req.body;
+      const folder = await storage.moveFolder(id, userId, parentId);
+      if (!folder) return res.status(404).json({ message: "Folder not found" });
+      res.json(folder);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to move folder" });
+    }
+  });
+
+  app.delete("/api/folders/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const id = parseInt(req.params.id);
+      await storage.deleteFolder(id, userId);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete folder" });
+    }
+  });
+
   app.get("/api/knowledge-files", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
@@ -68,12 +142,14 @@ export async function registerRoutes(
         content = `[文件: ${file.originalname}] 此文件已上传到知识库。文件大小: ${file.size} 字节。`;
       }
 
+      const folderId = req.body?.folderId ? parseInt(req.body.folderId) : null;
       const knowledgeFile = await storage.createKnowledgeFile({
         userId,
         fileName: file.originalname,
         fileType: ext || "unknown",
         fileSize: file.size,
         content,
+        folderId,
       });
 
       await storage.createActivityLog({
@@ -261,6 +337,30 @@ ${kbContext || "（用户尚未上传任何文件到知识库）"}
     } catch (error) {
       console.error("Error updating task:", error);
       res.status(500).json({ message: "Failed to update task" });
+    }
+  });
+
+  app.patch("/api/knowledge-files/:id/move", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const id = parseInt(req.params.id);
+      const { folderId } = req.body;
+      const file = await storage.moveFile(id, userId, folderId ?? null);
+      if (!file) return res.status(404).json({ message: "File not found" });
+      res.json(file);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to move file" });
+    }
+  });
+
+  app.delete("/api/tasks/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const id = parseInt(req.params.id);
+      await storage.deleteTask(id, userId);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete task" });
     }
   });
 

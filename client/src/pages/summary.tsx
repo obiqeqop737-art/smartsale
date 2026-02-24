@@ -1,9 +1,7 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import {
   FileText,
@@ -80,35 +78,33 @@ export default function SummaryPage() {
   };
 
   return (
-    <div className="flex h-full flex-col p-4" data-testid="page-summary">
-      <div className="mb-6 flex items-center justify-between gap-4">
+    <div className="flex h-full flex-col p-4 md:p-6" data-testid="page-summary">
+      <div className="mb-4 md:mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-4">
         <div>
-          <h1 className="flex items-center gap-2 text-xl font-bold">
-            <FileText className="h-5 w-5 text-primary" />
+          <h1 className="flex items-center gap-2 text-xl font-bold text-white">
+            <div className="h-8 w-8 rounded-lg bg-blue-500/15 border border-blue-500/20 flex items-center justify-center">
+              <FileText className="h-4 w-4 text-blue-400" />
+            </div>
             每日工作 AI 总结
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            一键生成结构化销售日报
-          </p>
+          <p className="mt-1 text-sm text-slate-500">一键生成结构化销售日报</p>
         </div>
         <div className="flex gap-2">
           {summaryContent && (
             <>
               <Button
-                variant="secondary"
+                variant="ghost"
                 onClick={handleCopy}
+                className="text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 border border-blue-500/15"
                 data-testid="button-copy-summary"
               >
-                {copied ? (
-                  <CheckCircle className="mr-2 h-4 w-4" />
-                ) : (
-                  <Copy className="mr-2 h-4 w-4" />
-                )}
+                {copied ? <CheckCircle className="mr-2 h-4 w-4 text-emerald-400" /> : <Copy className="mr-2 h-4 w-4" />}
                 {copied ? "已复制" : "复制"}
               </Button>
               <Button
-                variant="secondary"
+                variant="ghost"
                 onClick={handleExport}
+                className="text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 border border-blue-500/15"
                 data-testid="button-export-summary"
               >
                 <Download className="mr-2 h-4 w-4" />
@@ -122,6 +118,7 @@ export default function SummaryPage() {
               generateMutation.mutate();
             }}
             disabled={generateMutation.isPending}
+            className="glow-btn text-white border-0"
             data-testid="button-generate-summary"
           >
             {generateMutation.isPending ? (
@@ -134,29 +131,32 @@ export default function SummaryPage() {
         </div>
       </div>
 
-      <Card className="flex-1">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <FileText className="h-4 w-4 text-primary" />
+      <div className="flex-1 glass-card rounded-xl overflow-hidden">
+        <div className="glass-dialog-header px-6 py-3 flex items-center gap-2">
+          <FileText className="h-4 w-4 text-blue-400" />
+          <span className="text-sm font-medium text-blue-200">
             销售日报 - {new Date().toLocaleDateString("zh-CN", {
               year: "numeric",
               month: "long",
               day: "numeric",
               weekday: "long",
             })}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="flex-1">
+          </span>
+        </div>
+
+        <div className="p-6 h-[calc(100%-48px)]">
           {!summaryContent && !generateMutation.isPending ? (
-            <div className="flex flex-col items-center justify-center py-24 text-center text-muted-foreground">
-              <FileText className="mb-4 h-16 w-16 opacity-20" />
-              <h3 className="mb-2 text-lg font-medium">点击生成您的销售日报</h3>
-              <p className="mb-6 max-w-md text-sm">
-                AI 将自动读取您今天的已完成任务、情报浏览记录和知识库交互，
-                生成一份结构化的工作总结
+            <div className="flex flex-col items-center justify-center h-full text-center">
+              <div className="h-20 w-20 rounded-full bg-blue-500/5 border border-blue-500/15 flex items-center justify-center mb-6">
+                <FileText className="h-10 w-10 text-blue-500/20" />
+              </div>
+              <h3 className="mb-2 text-lg font-medium text-slate-300">点击生成您的销售日报</h3>
+              <p className="mb-6 max-w-md text-sm text-slate-500">
+                AI 将自动读取您今天的已完成任务、情报浏览记录和知识库交互，生成一份结构化的工作总结
               </p>
               <Button
                 onClick={() => generateMutation.mutate()}
+                className="glow-btn text-white border-0"
                 data-testid="button-generate-summary-center"
               >
                 <Sparkles className="mr-2 h-4 w-4" />
@@ -164,26 +164,29 @@ export default function SummaryPage() {
               </Button>
             </div>
           ) : generateMutation.isPending && !summaryContent ? (
-            <div className="space-y-4 py-8">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" />
+            <div className="space-y-6 py-8">
+              <div className="flex items-center gap-3 text-sm text-blue-300/70">
+                <Loader2 className="h-4 w-4 animate-spin text-blue-400" />
                 正在读取您的工作数据并生成日报...
               </div>
-              <Skeleton className="h-4 w-3/4" />
-              <Skeleton className="h-4 w-1/2" />
-              <Skeleton className="h-4 w-2/3" />
-              <Skeleton className="h-4 w-3/4" />
-              <Skeleton className="h-4 w-1/3" />
+              <div className="h-1 rounded-full bg-slate-800 overflow-hidden">
+                <div className="h-full w-1/3 progress-glow" />
+              </div>
+              <div className="space-y-3">
+                {[0.75, 0.5, 0.65, 0.8, 0.35].map((w, i) => (
+                  <div key={i} className="h-4 rounded glass-card animate-pulse" style={{ width: `${w * 100}%` }} />
+                ))}
+              </div>
             </div>
           ) : (
-            <ScrollArea className="h-[calc(100vh-300px)]">
-              <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap" data-testid="text-summary-content">
+            <ScrollArea className="h-full">
+              <div className="prose prose-sm prose-invert max-w-none whitespace-pre-wrap text-slate-300 leading-relaxed" data-testid="text-summary-content">
                 {summaryContent}
               </div>
             </ScrollArea>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
