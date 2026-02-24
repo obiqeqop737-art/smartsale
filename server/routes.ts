@@ -390,6 +390,28 @@ ${kbContext || "（用户尚未上传任何文件到知识库）"}
     }
   });
 
+  app.get("/api/dashboard-stats", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const stats = await storage.getDashboardStats(userId);
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching dashboard stats:", error);
+      res.status(500).json({ message: "Failed to fetch dashboard stats" });
+    }
+  });
+
+  app.get("/api/daily-summaries", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const summaries = await storage.getDailySummaries(userId);
+      res.json(summaries);
+    } catch (error) {
+      console.error("Error fetching daily summaries:", error);
+      res.status(500).json({ message: "Failed to fetch daily summaries" });
+    }
+  });
+
   app.post("/api/daily-summary", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
@@ -443,11 +465,21 @@ ${activityInfo}
         config: { maxOutputTokens: 8192 },
       });
 
+      let fullSummary = "";
       for await (const chunk of stream) {
         const text = chunk.text || "";
         if (text) {
+          fullSummary += text;
           res.write(`data: ${JSON.stringify({ content: text })}\n\n`);
         }
+      }
+
+      if (fullSummary) {
+        await storage.createDailySummary({
+          userId,
+          content: fullSummary,
+          date: new Date().toISOString().slice(0, 10),
+        });
       }
 
       await storage.createActivityLog({

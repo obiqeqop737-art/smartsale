@@ -5,9 +5,11 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppSidebar } from "@/components/app-sidebar";
+import { TopBar } from "@/components/top-bar";
 import { useAuth } from "@/hooks/use-auth";
 import NotFound from "@/pages/not-found";
 import LandingPage from "@/pages/landing";
+import DashboardPage from "@/pages/dashboard";
 import KnowledgePage from "@/pages/knowledge";
 import IntelligencePage from "@/pages/intelligence";
 import TasksPage from "@/pages/tasks";
@@ -75,16 +77,20 @@ function AuthenticatedApp() {
       {!isMobile && (
         <AppSidebar user={user} collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} />
       )}
-      <main className="flex-1 overflow-auto">
-        <Switch>
-          <Route path="/" component={KnowledgePage} />
-          <Route path="/knowledge" component={KnowledgePage} />
-          <Route path="/intelligence" component={IntelligencePage} />
-          <Route path="/tasks" component={TasksPage} />
-          <Route path="/summary" component={SummaryPage} />
-          <Route component={NotFound} />
-        </Switch>
-      </main>
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <TopBar user={user} />
+        <main className="flex-1 overflow-auto">
+          <Switch>
+            <Route path="/" component={DashboardPage} />
+            <Route path="/dashboard" component={DashboardPage} />
+            <Route path="/knowledge" component={KnowledgePage} />
+            <Route path="/intelligence" component={IntelligencePage} />
+            <Route path="/tasks" component={TasksPage} />
+            <Route path="/summary" component={SummaryPage} />
+            <Route component={NotFound} />
+          </Switch>
+        </main>
+      </div>
     </div>
   );
 }

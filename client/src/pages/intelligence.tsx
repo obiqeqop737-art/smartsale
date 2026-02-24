@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Badge } from "@/components/ui/badge";
@@ -9,19 +9,21 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Radar, TrendingUp, Building2, Link2, Sparkles, ExternalLink, Star, Share2 } from "lucide-react";
+import { Radar, TrendingUp, Building2, Link2, Sparkles, ExternalLink, Star, Share2, Search, X, Flame } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { IntelligencePost } from "@shared/schema";
 
-const categoryConfig: Record<string, { icon: typeof Radar; color: string; label: string; bgClass: string }> = {
-  industry: { icon: TrendingUp, color: "text-blue-400", label: "行业动态", bgClass: "bg-blue-500/10 border-blue-500/20" },
-  competitor: { icon: Building2, color: "text-purple-400", label: "友商追踪", bgClass: "bg-purple-500/10 border-purple-500/20" },
-  supply_chain: { icon: Link2, color: "text-emerald-400", label: "供应链", bgClass: "bg-emerald-500/10 border-emerald-500/20" },
+const categoryConfig: Record<string, { icon: typeof Radar; color: string; label: string; bgClass: string; activeBg: string }> = {
+  industry: { icon: TrendingUp, color: "text-blue-400", label: "行业动态", bgClass: "bg-blue-500/10 border-blue-500/20", activeBg: "bg-blue-500/25 border-blue-500/40" },
+  competitor: { icon: Building2, color: "text-purple-400", label: "友商追踪", bgClass: "bg-purple-500/10 border-purple-500/20", activeBg: "bg-purple-500/25 border-purple-500/40" },
+  supply_chain: { icon: Link2, color: "text-emerald-400", label: "供应链", bgClass: "bg-emerald-500/10 border-emerald-500/20", activeBg: "bg-emerald-500/25 border-emerald-500/40" },
 };
 
 export default function IntelligencePage() {
   const { toast } = useToast();
   const [selectedPost, setSelectedPost] = useState<IntelligencePost | null>(null);
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const { data: posts = [], isLoading } = useQuery<IntelligencePost[]>({
     queryKey: ["/api/intelligence-posts"],
@@ -33,8 +35,35 @@ export default function IntelligencePage() {
     },
   });
 
+  const filteredPosts = useMemo(() => {
+    let result = posts;
+    if (activeCategory) {
+      result = result.filter(p => p.category === activeCategory);
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(p =>
+        p.title.toLowerCase().includes(q) ||
+        p.summary.toLowerCase().includes(q) ||
+        (p.tags && p.tags.some(t => t.toLowerCase().includes(q)))
+      );
+    }
+    return result;
+  }, [posts, activeCategory, searchQuery]);
+
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    posts.forEach(p => { counts[p.category] = (counts[p.category] || 0) + 1; });
+    return counts;
+  }, [posts]);
+
   const formatDate = (d: string | Date) => {
     const date = new Date(d);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const hours = Math.floor(diff / 3600000);
+    if (hours < 1) return "刚刚";
+    if (hours < 24) return `${hours}小时前`;
     return date.toLocaleDateString("zh-CN", { month: "short", day: "numeric" });
   };
 
@@ -55,14 +84,54 @@ export default function IntelligencePage() {
           </h1>
           <p className="mt-1 text-sm text-slate-500">锂电池及新能源行业实时情报追踪</p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          {Object.entries(categoryConfig).map(([key, cfg]) => (
-            <div key={key} className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs ${cfg.bgClass}`}>
+        <div className="relative w-full md:w-64">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+          <input
+            type="text"
+            placeholder="搜索情报标题、摘要、标签..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full h-9 pl-9 pr-8 rounded-lg text-sm glass-input text-slate-300 placeholder:text-slate-600"
+            data-testid="input-intel-search"
+          />
+          {searchQuery && (
+            <button onClick={() => setSearchQuery("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300" data-testid="button-clear-search">
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="mb-4 flex flex-wrap gap-2">
+        <button
+          onClick={() => setActiveCategory(null)}
+          className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs transition-all ${
+            !activeCategory
+              ? "bg-blue-500/20 border-blue-500/40 text-blue-300"
+              : "bg-slate-800/30 border-slate-700/30 text-slate-500 hover:text-slate-300 hover:border-slate-600/40"
+          }`}
+          data-testid="filter-all"
+        >
+          全部
+          <span className="ml-1 text-[10px] opacity-70">{posts.length}</span>
+        </button>
+        {Object.entries(categoryConfig).map(([key, cfg]) => {
+          const isActive = activeCategory === key;
+          return (
+            <button
+              key={key}
+              onClick={() => setActiveCategory(isActive ? null : key)}
+              className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs transition-all ${
+                isActive ? cfg.activeBg : `${cfg.bgClass} hover:opacity-80`
+              }`}
+              data-testid={`filter-${key}`}
+            >
               <cfg.icon className={`h-3 w-3 ${cfg.color}`} />
               <span className={cfg.color}>{cfg.label}</span>
-            </div>
-          ))}
-        </div>
+              <span className={`ml-1 text-[10px] ${cfg.color} opacity-70`}>{categoryCounts[key] || 0}</span>
+            </button>
+          );
+        })}
       </div>
 
       {isLoading ? (
@@ -73,24 +142,47 @@ export default function IntelligencePage() {
             </div>
           ))}
         </div>
-      ) : posts.length === 0 ? (
-        <div className="flex flex-1 flex-col items-center justify-center text-center">
+      ) : filteredPosts.length === 0 ? (
+        <div className="flex flex-1 flex-col items-center justify-center text-center py-16">
           <Radar className="mb-4 h-16 w-16 text-blue-500/15" />
-          <h3 className="mb-2 text-lg font-medium text-slate-400">暂无情报</h3>
-          <p className="text-sm text-slate-600">情报数据正在加载中...</p>
+          <h3 className="mb-2 text-lg font-medium text-slate-400">
+            {searchQuery || activeCategory ? "未找到匹配的情报" : "暂无情报"}
+          </h3>
+          <p className="text-sm text-slate-600">
+            {searchQuery || activeCategory ? "请尝试调整筛选条件" : "情报数据正在加载中..."}
+          </p>
+          {(searchQuery || activeCategory) && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => { setSearchQuery(""); setActiveCategory(null); }}
+              className="mt-3 text-blue-400 hover:text-blue-300"
+              data-testid="button-clear-filters"
+            >
+              清除筛选
+            </Button>
+          )}
         </div>
       ) : (
         <div className="columns-1 gap-4 sm:columns-2 lg:columns-3">
-          {posts.map((post) => {
+          {filteredPosts.map((post, idx) => {
             const cfg = categoryConfig[post.category] || categoryConfig.industry;
             const Icon = cfg.icon;
             return (
               <div key={post.id} className="mb-4 break-inside-avoid">
                 <div
-                  className="glass-card glass-card-hover rounded-xl p-5 cursor-pointer transition-all duration-300"
+                  className="glass-card glass-card-hover rounded-xl p-5 cursor-pointer transition-all duration-300 relative"
                   data-testid={`intel-card-${post.id}`}
                   onClick={() => handleCardClick(post)}
                 >
+                  {idx === 0 && !activeCategory && !searchQuery && (
+                    <div className="absolute top-3 right-3">
+                      <div className="flex items-center gap-1 rounded-full bg-red-500/10 border border-red-500/20 px-2 py-0.5 text-[10px] text-red-400">
+                        <Flame className="h-2.5 w-2.5" />
+                        热门
+                      </div>
+                    </div>
+                  )}
                   <div className="mb-3 flex items-center justify-between gap-2">
                     <div className={`flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[10px] ${cfg.bgClass}`}>
                       <Icon className={`h-2.5 w-2.5 ${cfg.color}`} />
@@ -99,10 +191,10 @@ export default function IntelligencePage() {
                     <span className="text-[10px] text-slate-600">{formatDate(post.publishedAt)}</span>
                   </div>
                   <h3 className="mb-2 text-sm font-semibold leading-snug text-white">{post.title}</h3>
-                  <p className="mb-3 text-xs leading-relaxed text-slate-400">{post.summary}</p>
+                  <p className="mb-3 text-xs leading-relaxed text-slate-400 line-clamp-3">{post.summary}</p>
                   <div className="flex items-start gap-2 rounded-lg bg-blue-500/5 border border-blue-500/10 p-3">
                     <Sparkles className="mt-0.5 h-3 w-3 shrink-0 text-blue-400 animate-glow-pulse" />
-                    <p className="text-xs font-medium leading-relaxed text-blue-300">{post.aiInsight}</p>
+                    <p className="text-xs font-medium leading-relaxed text-blue-300 line-clamp-2">{post.aiInsight}</p>
                   </div>
                   {post.tags && post.tags.length > 0 && (
                     <div className="mt-3 flex flex-wrap gap-1">

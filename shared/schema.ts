@@ -68,6 +68,14 @@ export const chatMessages = pgTable("chat_messages", {
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
 
+export const dailySummaries = pgTable("daily_summaries", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull(),
+  content: text("content").notNull(),
+  date: date("date").notNull(),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+});
+
 export const activityLogs = pgTable("activity_logs", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").notNull(),
@@ -83,6 +91,7 @@ export const insertTaskSchema = createInsertSchema(tasks).omit({ id: true, creat
 export const insertIntelligencePostSchema = createInsertSchema(intelligencePosts).omit({ id: true, createdAt: true });
 export const insertChatSessionSchema = createInsertSchema(chatSessions).omit({ id: true, createdAt: true });
 export const insertChatMessageSchema = createInsertSchema(chatMessages).omit({ id: true, createdAt: true });
+export const insertDailySummarySchema = createInsertSchema(dailySummaries).omit({ id: true, createdAt: true });
 export const insertActivityLogSchema = createInsertSchema(activityLogs).omit({ id: true, createdAt: true });
 
 export type Folder = typeof folders.$inferSelect;
@@ -97,5 +106,7 @@ export type ChatSession = typeof chatSessions.$inferSelect;
 export type InsertChatSession = z.infer<typeof insertChatSessionSchema>;
 export type ChatMessage = typeof chatMessages.$inferSelect;
 export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
+export type DailySummary = typeof dailySummaries.$inferSelect;
+export type InsertDailySummary = z.infer<typeof insertDailySummarySchema>;
 export type ActivityLog = typeof activityLogs.$inferSelect;
 export type InsertActivityLog = z.infer<typeof insertActivityLogSchema>;

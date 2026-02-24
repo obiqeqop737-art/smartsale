@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
@@ -40,6 +40,10 @@ import {
   Edit3,
   Trash2,
   Loader2,
+  CheckCircle2,
+  Clock,
+  ListTodo,
+  Filter,
 } from "lucide-react";
 import type { Task } from "@shared/schema";
 
@@ -60,6 +64,7 @@ export default function TasksPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [deleteTaskId, setDeleteTaskId] = useState<number | null>(null);
+  const [priorityFilter, setPriorityFilter] = useState<string | null>(null);
   const [newTask, setNewTask] = useState({
     title: "",
     description: "",
@@ -73,6 +78,14 @@ export default function TasksPage() {
   const { data: tasks = [], isLoading } = useQuery<Task[]>({
     queryKey: ["/api/tasks"],
   });
+
+  const taskStats = useMemo(() => {
+    const total = tasks.length;
+    const todo = tasks.filter(t => t.status === "todo").length;
+    const inProgress = tasks.filter(t => t.status === "in_progress").length;
+    const done = tasks.filter(t => t.status === "done").length;
+    return { total, todo, inProgress, done };
+  }, [tasks]);
 
   const createTaskMutation = useMutation({
     mutationFn: async (data: typeof newTask) => {
@@ -162,7 +175,13 @@ export default function TasksPage() {
     return diff > 0 && diff < 3 * 24 * 60 * 60 * 1000;
   };
 
-  const getTasksByStatus = (status: string) => tasks.filter((t) => t.status === status);
+  const getTasksByStatus = (status: string) => {
+    let filtered = tasks.filter((t) => t.status === status);
+    if (priorityFilter) {
+      filtered = filtered.filter((t) => t.priority === priorityFilter);
+    }
+    return filtered;
+  };
 
   const openEditDialog = (task: Task) => {
     setEditingTask(task);
@@ -211,6 +230,69 @@ export default function TasksPage() {
           <Plus className="mr-2 h-4 w-4" />
           新建任务
         </Button>
+      </div>
+
+      <div className="mb-4 grid grid-cols-2 md:grid-cols-4 gap-3" data-testid="task-stats">
+        <div className="glass-card rounded-lg px-4 py-3 flex items-center gap-3">
+          <div className="h-8 w-8 rounded-lg bg-blue-500/10 border border-blue-500/15 flex items-center justify-center">
+            <KanbanSquare className="h-4 w-4 text-blue-400" />
+          </div>
+          <div>
+            <p className="text-lg font-bold text-white" data-testid="text-stat-total">{taskStats.total}</p>
+            <p className="text-[10px] text-slate-500">总任务</p>
+          </div>
+        </div>
+        <div className="glass-card rounded-lg px-4 py-3 flex items-center gap-3">
+          <div className="h-8 w-8 rounded-lg bg-slate-500/10 border border-slate-500/15 flex items-center justify-center">
+            <ListTodo className="h-4 w-4 text-slate-400" />
+          </div>
+          <div>
+            <p className="text-lg font-bold text-white" data-testid="text-stat-todo">{taskStats.todo}</p>
+            <p className="text-[10px] text-slate-500">待办</p>
+          </div>
+        </div>
+        <div className="glass-card rounded-lg px-4 py-3 flex items-center gap-3">
+          <div className="h-8 w-8 rounded-lg bg-blue-500/10 border border-blue-500/15 flex items-center justify-center">
+            <Clock className="h-4 w-4 text-blue-400" />
+          </div>
+          <div>
+            <p className="text-lg font-bold text-white" data-testid="text-stat-in-progress">{taskStats.inProgress}</p>
+            <p className="text-[10px] text-slate-500">进行中</p>
+          </div>
+        </div>
+        <div className="glass-card rounded-lg px-4 py-3 flex items-center gap-3">
+          <div className="h-8 w-8 rounded-lg bg-emerald-500/10 border border-emerald-500/15 flex items-center justify-center">
+            <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+          </div>
+          <div>
+            <p className="text-lg font-bold text-white" data-testid="text-stat-done">{taskStats.done}</p>
+            <p className="text-[10px] text-slate-500">已完成</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="mb-4 flex items-center gap-2" data-testid="task-filters">
+        <Filter className="h-3.5 w-3.5 text-slate-600" />
+        <span className="text-xs text-slate-600 mr-1">优先级:</span>
+        {[
+          { key: null, label: "全部" },
+          { key: "high", label: "高", color: "text-red-400" },
+          { key: "medium", label: "中", color: "text-blue-400" },
+          { key: "low", label: "低", color: "text-slate-400" },
+        ].map((f) => (
+          <button
+            key={f.key ?? "all"}
+            onClick={() => setPriorityFilter(f.key)}
+            className={`rounded-full border px-2.5 py-1 text-[10px] transition-all ${
+              priorityFilter === f.key
+                ? "bg-blue-500/20 border-blue-500/40 text-blue-300"
+                : "bg-slate-800/30 border-slate-700/30 text-slate-500 hover:text-slate-300"
+            }`}
+            data-testid={`filter-priority-${f.key ?? "all"}`}
+          >
+            {f.label}
+          </button>
+        ))}
       </div>
 
       {isLoading ? (

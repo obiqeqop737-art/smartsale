@@ -1,16 +1,18 @@
 import { useLocation, Link } from "wouter";
-import { Brain, Radar, KanbanSquare, FileText, LogOut, ChevronLeft, ChevronRight } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Brain, Radar, KanbanSquare, FileText, LogOut, ChevronLeft, ChevronRight, LayoutDashboard } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { User } from "@shared/models/auth";
-import { useState } from "react";
+import type { Task, IntelligencePost } from "@shared/schema";
 
 const navItems = [
-  { title: "知识库 & 文档", url: "/knowledge", icon: Brain, desc: "文档管理与AI问答" },
-  { title: "情报雷达", url: "/intelligence", icon: Radar, desc: "行业情报追踪" },
-  { title: "任务看板", url: "/tasks", icon: KanbanSquare, desc: "任务管理" },
-  { title: "每日总结", url: "/summary", icon: FileText, desc: "AI工作日报" },
+  { title: "工作台", url: "/", altUrl: "/dashboard", icon: LayoutDashboard, desc: "数据概览", badgeKey: null as string | null },
+  { title: "知识库", url: "/knowledge", altUrl: null, icon: Brain, desc: "文档管理与AI问答", badgeKey: null },
+  { title: "情报雷达", url: "/intelligence", altUrl: null, icon: Radar, desc: "行业情报追踪", badgeKey: "intel" },
+  { title: "任务看板", url: "/tasks", altUrl: null, icon: KanbanSquare, desc: "任务管理", badgeKey: "tasks" },
+  { title: "每日总结", url: "/summary", altUrl: null, icon: FileText, desc: "AI工作日报", badgeKey: null },
 ];
 
 interface AppSidebarProps {
@@ -21,6 +23,17 @@ interface AppSidebarProps {
 
 export function AppSidebar({ user, collapsed, onToggle }: AppSidebarProps) {
   const [location] = useLocation();
+
+  const { data: tasksData } = useQuery<Task[]>({ queryKey: ["/api/tasks"] });
+  const { data: intelData } = useQuery<IntelligencePost[]>({ queryKey: ["/api/intelligence-posts"] });
+
+  const todoCount = tasksData?.filter(t => t.status === "todo").length ?? 0;
+  const intelCount = intelData?.length ?? 0;
+
+  const badges: Record<string, number> = {
+    tasks: todoCount,
+    intel: intelCount,
+  };
 
   return (
     <aside
@@ -43,11 +56,12 @@ export function AppSidebar({ user, collapsed, onToggle }: AppSidebarProps) {
 
       <nav className="mt-2 flex-1 px-2 space-y-1">
         {navItems.map((item) => {
-          const isActive = location === item.url || (item.url === "/knowledge" && location === "/");
+          const isActive = location === item.url || location === item.altUrl;
+          const badgeVal = item.badgeKey ? badges[item.badgeKey] : 0;
           const linkContent = (
             <Link
               href={item.url}
-              data-testid={`nav-${item.url.slice(1)}`}
+              data-testid={`nav-${item.url === "/" ? "dashboard" : item.url.slice(1)}`}
               className={`flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-200 group ${
                 isActive
                   ? "glow-border-active bg-blue-500/10 text-blue-300"
@@ -55,14 +69,28 @@ export function AppSidebar({ user, collapsed, onToggle }: AppSidebarProps) {
               }`}
             >
               <item.icon className={`h-4 w-4 shrink-0 ${isActive ? "text-blue-400" : "text-slate-500 group-hover:text-blue-400"}`} />
-              {!collapsed && <span className="text-sm truncate">{item.title}</span>}
+              {!collapsed && (
+                <>
+                  <span className="text-sm truncate flex-1">{item.title}</span>
+                  {badgeVal > 0 && (
+                    <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-blue-500/15 px-1.5 text-[10px] font-medium text-blue-400 border border-blue-500/20">
+                      {badgeVal > 99 ? "99+" : badgeVal}
+                    </span>
+                  )}
+                </>
+              )}
+              {collapsed && badgeVal > 0 && (
+                <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-blue-500" />
+              )}
             </Link>
           );
 
           if (collapsed) {
             return (
               <Tooltip key={item.title} delayDuration={0}>
-                <TooltipTrigger asChild>{linkContent}</TooltipTrigger>
+                <TooltipTrigger asChild>
+                  <div className="relative">{linkContent}</div>
+                </TooltipTrigger>
                 <TooltipContent side="right" className="glass-dialog text-blue-200 border-blue-500/20">
                   <p className="font-medium">{item.title}</p>
                   <p className="text-xs text-blue-300/50">{item.desc}</p>

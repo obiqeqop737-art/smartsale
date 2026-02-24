@@ -1,15 +1,16 @@
 import {
-  folders, knowledgeFiles, tasks, intelligencePosts, chatSessions, chatMessages, activityLogs,
+  folders, knowledgeFiles, tasks, intelligencePosts, chatSessions, chatMessages, activityLogs, dailySummaries,
   type Folder, type InsertFolder,
   type KnowledgeFile, type InsertKnowledgeFile,
   type Task, type InsertTask,
   type IntelligencePost, type InsertIntelligencePost,
   type ChatSession, type InsertChatSession,
   type ChatMessage, type InsertChatMessage,
+  type DailySummary, type InsertDailySummary,
   type ActivityLog, type InsertActivityLog,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, gte, sql, isNull } from "drizzle-orm";
+import { eq, and, desc, gte, sql, isNull, count } from "drizzle-orm";
 
 export interface IStorage {
   getFolders(userId: string): Promise<Folder[]>;
@@ -40,6 +41,23 @@ export interface IStorage {
 
   createActivityLog(log: InsertActivityLog): Promise<ActivityLog>;
   getActivityLogsToday(userId: string): Promise<ActivityLog[]>;
+
+  getDailySummaries(userId: string): Promise<DailySummary[]>;
+  createDailySummary(summary: InsertDailySummary): Promise<DailySummary>;
+  getDashboardStats(userId: string): Promise<{
+    fileCount: number;
+    folderCount: number;
+    taskTotal: number;
+    taskDone: number;
+    taskTodo: number;
+    taskInProgress: number;
+    intelCount: number;
+    activityTodayCount: number;
+    recentFiles: KnowledgeFile[];
+    recentTasks: Task[];
+    recentIntel: IntelligencePost[];
+    recentActivity: ActivityLog[];
+  }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -170,6 +188,43 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(activityLogs).where(
       and(eq(activityLogs.userId, userId), gte(activityLogs.createdAt, today))
     ).orderBy(desc(activityLogs.createdAt));
+  }
+
+  async getDailySummaries(userId: string): Promise<DailySummary[]> {
+    return db.select().from(dailySummaries).where(eq(dailySummaries.userId, userId)).orderBy(desc(dailySummaries.createdAt));
+  }
+
+  async createDailySummary(summary: InsertDailySummary): Promise<DailySummary> {
+    const [result] = await db.insert(dailySummaries).values(summary).returning();
+    return result;
+  }
+
+  async getDashboardStats(userId: string) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const userFiles = await db.select().from(knowledgeFiles).where(eq(knowledgeFiles.userId, userId));
+    const userFolders = await db.select().from(folders).where(eq(folders.userId, userId));
+    const userTasks = await db.select().from(tasks).where(eq(tasks.userId, userId)).orderBy(desc(tasks.createdAt));
+    const allIntel = await db.select().from(intelligencePosts).orderBy(desc(intelligencePosts.publishedAt));
+    const todayActivity = await db.select().from(activityLogs).where(
+      and(eq(activityLogs.userId, userId), gte(activityLogs.createdAt, today))
+    ).orderBy(desc(activityLogs.createdAt));
+
+    return {
+      fileCount: userFiles.length,
+      folderCount: userFolders.length,
+      taskTotal: userTasks.length,
+      taskDone: userTasks.filter(t => t.status === "done").length,
+      taskTodo: userTasks.filter(t => t.status === "todo").length,
+      taskInProgress: userTasks.filter(t => t.status === "in_progress").length,
+      intelCount: allIntel.length,
+      activityTodayCount: todayActivity.length,
+      recentFiles: userFiles.slice(0, 5),
+      recentTasks: userTasks.filter(t => t.status !== "done").slice(0, 5),
+      recentIntel: allIntel.slice(0, 4),
+      recentActivity: todayActivity.slice(0, 8),
+    };
   }
 }
 
