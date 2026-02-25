@@ -88,6 +88,9 @@ export const dailySummaries = pgTable("daily_summaries", {
   userId: varchar("user_id").notNull(),
   content: text("content").notNull(),
   date: date("date").notNull(),
+  status: text("status").default("draft").notNull(),
+  sentToUserId: varchar("sent_to_user_id"),
+  sentAt: timestamp("sent_at"),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
 

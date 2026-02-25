@@ -531,6 +531,42 @@ ${activityInfo}
     }
   });
 
+  app.post("/api/daily-summary/:id/send", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const summaryId = parseInt(req.params.id);
+      const user = await storage.getUserById(userId);
+      if (!user?.superiorId) {
+        return res.status(400).json({ message: "未设置上级领导，请先在个人中心设置" });
+      }
+      const result = await storage.sendDailySummary(summaryId, userId, user.superiorId);
+      if (!result) {
+        return res.status(404).json({ message: "日报不存在" });
+      }
+      await storage.createActivityLog({
+        userId,
+        action: "send_summary",
+        detail: "发送日报给领导",
+        module: "summary",
+      });
+      res.json(result);
+    } catch (error) {
+      console.error("Error sending summary:", error);
+      res.status(500).json({ message: "发送日报失败" });
+    }
+  });
+
+  app.get("/api/daily-summaries/received", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const summaries = await storage.getReceivedSummaries(userId);
+      res.json(summaries);
+    } catch (error) {
+      console.error("Error fetching received summaries:", error);
+      res.status(500).json({ message: "Failed to fetch received summaries" });
+    }
+  });
+
   app.get("/api/admin/users", isAuthenticated, async (req: any, res) => {
     try {
       const currentUser = await storage.getUserById(req.user.claims.sub);
@@ -811,7 +847,7 @@ ${activityInfo}
   app.post("/api/intelligence-scheduler/trigger", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const currentUser = await storage.getUser(userId);
+      const currentUser = await storage.getUserById(userId);
       if (currentUser?.role !== "admin") {
         return res.status(403).json({ message: "Admin access required" });
       }

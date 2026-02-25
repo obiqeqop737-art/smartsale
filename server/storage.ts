@@ -276,6 +276,49 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
+  async sendDailySummary(id: number, userId: string, sentToUserId: string): Promise<DailySummary | null> {
+    const today = new Date().toISOString().slice(0, 10);
+    await db.update(dailySummaries)
+      .set({ status: "draft" })
+      .where(and(
+        eq(dailySummaries.userId, userId),
+        eq(dailySummaries.date, today),
+        eq(dailySummaries.status, "sent"),
+      ));
+    const [result] = await db.update(dailySummaries)
+      .set({ status: "sent", sentToUserId, sentAt: new Date() })
+      .where(and(eq(dailySummaries.id, id), eq(dailySummaries.userId, userId)))
+      .returning();
+    return result || null;
+  }
+
+  async getReceivedSummaries(userId: string): Promise<(DailySummary & { userName?: string; profileImageUrl?: string })[]> {
+    const rows = await db.select({
+      id: dailySummaries.id,
+      userId: dailySummaries.userId,
+      content: dailySummaries.content,
+      date: dailySummaries.date,
+      status: dailySummaries.status,
+      sentToUserId: dailySummaries.sentToUserId,
+      sentAt: dailySummaries.sentAt,
+      createdAt: dailySummaries.createdAt,
+      userName: users.username,
+      profileImageUrl: users.profileImageUrl,
+    })
+    .from(dailySummaries)
+    .leftJoin(users, eq(dailySummaries.userId, users.id))
+    .where(and(
+      eq(dailySummaries.sentToUserId, userId),
+      eq(dailySummaries.status, "sent"),
+    ))
+    .orderBy(desc(dailySummaries.sentAt));
+    return rows.map(r => ({
+      ...r,
+      userName: r.userName || undefined,
+      profileImageUrl: r.profileImageUrl || undefined,
+    }));
+  }
+
   async getDashboardStats(userId: string) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
