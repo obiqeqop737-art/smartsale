@@ -61,6 +61,8 @@ export async function generateIntelligence(): Promise<number> {
     if (jsonText.startsWith("```")) {
       jsonText = jsonText.replace(/^```(?:json)?\s*/, "").replace(/\s*```$/, "");
     }
+    // eslint-disable-next-line no-control-regex
+    jsonText = jsonText.replace(/[\x00-\x1F\x7F]/g, (ch) => ch === '\n' || ch === '\r' || ch === '\t' ? ch : '');
 
     const posts = JSON.parse(jsonText);
 

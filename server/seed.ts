@@ -78,16 +78,5 @@ const seedIntelligence = [
 ];
 
 export async function seedDatabase() {
-  try {
-    const existing = await db.select({ count: sql<number>`count(*)` }).from(intelligencePosts);
-    if (Number(existing[0].count) > 0) {
-      console.log("Intelligence posts already seeded, skipping...");
-      return;
-    }
-
-    await db.insert(intelligencePosts).values(seedIntelligence);
-    console.log("Seeded intelligence posts successfully");
-  } catch (error) {
-    console.error("Error seeding database:", error);
-  }
+  console.log("Intelligence posts seeding disabled - using AI-generated real-time content");
 }
