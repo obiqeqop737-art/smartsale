@@ -12,10 +12,12 @@ An enterprise document management platform built with Express + React + PostgreS
 - **Theme**: Blue glassmorphism with backdrop-blur, glow borders, semi-transparent layers
 
 ## Key Tables
-- `users` / `sessions` - Auth (managed by Replit Auth integration)
+- `users` / `sessions` - Auth (managed by Replit Auth integration). Users have `role` (admin/user), `userType` (user/department_head), `departmentId`
+- `departments` - Department hierarchy (id, name, parentId)
 - `folders` - 3-level hierarchical directory system (parentId self-reference, level 1-3)
 - `knowledge_files` - User-uploaded documents for RAG (with folderId FK)
 - `tasks` - Kanban task management (todo/in_progress/done)
+- `task_comments` - Department head task reviews/comments (taskId, userId, content)
 - `intelligence_posts` - Industry intel feed (seeded, lithium battery/new energy)
 - `chat_sessions` / `chat_messages` - AI chat history
 - `activity_logs` - User activity tracking for daily summary
@@ -26,16 +28,31 @@ An enterprise document management platform built with Express + React + PostgreS
 - **Knowledge Base**: 3-level folder tree, file upload with batch progress, RAG AI chat
 - **Intelligence Radar**: News cards with detail dialog, AI insights, favorite/share
 - **Task Kanban**: Drag-drop columns, edit/delete dialogs, priority badges, deadline alerts
+- **Team Tasks**: Department heads can view subordinate tasks and add comments/reviews
 - **Daily Summary**: AI-generated structured sales daily report with copy/export
-- **Admin Handover Center**: One-click asset transfer (files, tasks, chats) between users for resignation/transfer
+- **Admin Panel**: Tab-based (Users/Departments/Handover). User type management (普通用户/部门长), department assignment, asset transfer
+- **Department Management**: Admin CRUD for departments with parent hierarchy
+- **Profile**: Avatar upload (local file), department selection from DB, superior selection
 - **Plugin Hub**: Grid layout with simulated enterprise plugin cards, connect/disconnect interactions
 - **Mobile Responsive**: Sidebar overlay, collapsible panels, horizontal scroll kanban
+
+## User Types & Roles
+- `role`: "admin" or "user" - controls access to admin panel
+- `userType`: "user" (普通用户) or "department_head" (部门长)
+  - Department heads see "团队任务" toggle on tasks page
+  - Can view tasks of: direct subordinates (same dept regular users), sub-department heads (superiorId), and their dept's regular users
+  - Can add comments/reviews on subordinate tasks
+
+## Auth Pattern
+- Replit OIDC via passport.js, user ID from `req.user.claims.sub`
+- Session stored in PostgreSQL `sessions` table
+- User data in `users` table, upserted on login
 
 ## CSS Classes (Glassmorphism)
 - `glass-card` / `glass-card-hover` - Semi-transparent card with blur
 - `glass-sidebar` - Sidebar with backdrop blur
 - `glass-dialog` / `glass-dialog-header` - Dialog with blur and gradient header
-- `glass-input` - Input with blur and focus glow
+- `glass-input` - Input with blur and focus glow (dark mode: light text color)
 - `glow-btn` - Blue gradient button with glow
 - `glow-border` / `glow-border-active` - Blue glow border effects
 - `glow-text` - Text with blue glow shadow
@@ -43,31 +60,20 @@ An enterprise document management platform built with Express + React + PostgreS
 ## Project Structure
 ```
 client/src/
-  pages/         - Landing, Knowledge, Intelligence, Tasks, Summary, Admin, Plugins
-  components/    - AppSidebar (custom glassmorphism sidebar), UI components
+  pages/         - Landing, Knowledge, Intelligence, Tasks, Summary, Admin, Plugins, Profile
+  components/    - AppSidebar, TopBar (avatar dropdown with profile link), UI components
   hooks/         - useAuth, useTheme
 server/
-  routes.ts      - All API endpoints (folders, files, tasks, chat, summary, admin)
+  routes.ts      - All API endpoints (folders, files, tasks, chat, summary, admin, departments, comments, team-tasks)
   storage.ts     - DatabaseStorage with all CRUD + admin operations
   seed.ts        - Intelligence posts seed data
   db.ts          - PostgreSQL connection
-  replit_integrations/  - Auth, Chat, Image modules
+  replit_integrations/  - Auth (OIDC), Chat, Image modules
 shared/
-  schema.ts      - All Drizzle schemas (folders, knowledge_files, tasks, handover_logs, etc.)
-  models/        - Auth schema
+  schema.ts      - All Drizzle schemas (departments, folders, knowledge_files, tasks, task_comments, handover_logs, etc.)
+  models/auth.ts - Users and sessions table definitions
 ```
 
 ## Running
 - `npm run dev` starts Express (backend) + Vite (frontend) on port 5000
 - `npm run db:push` syncs Drizzle schema to PostgreSQL
-
-## Recent Changes (2026-02-24)
-- Complete UI redesign from dark industrial to blue glassmorphism theme
-- Added folders table with 3-level hierarchy and server-side level validation
-- Rebuilt all pages: landing, knowledge, intelligence, tasks, summary
-- Added mobile responsive support with sidebar overlay and panel toggles
-- Added task edit/delete, intelligence detail dialog, batch file upload
-- Added Handover Center (Admin module) with user management, asset transfer drawer, handover logs
-- Added Plugin Hub with 8 simulated plugin cards, connect/disconnect dialogs, green breathing light
-- Added sidebar bottom nav section with "扩展" label for Plugins and Admin
-- Added handover_logs table to track asset transfers between users

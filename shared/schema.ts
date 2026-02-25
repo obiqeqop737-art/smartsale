@@ -5,6 +5,13 @@ import { z } from "zod";
 
 export * from "./models/auth";
 
+export const departments = pgTable("departments", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  parentId: integer("parent_id"),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+});
+
 export const folders = pgTable("folders", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").notNull(),
@@ -36,6 +43,14 @@ export const tasks = pgTable("tasks", {
   assignedBy: text("assigned_by"),
   dueDate: date("due_date"),
   completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+});
+
+export const taskComments = pgTable("task_comments", {
+  id: serial("id").primaryKey(),
+  taskId: integer("task_id").notNull(),
+  userId: varchar("user_id").notNull(),
+  content: text("content").notNull(),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
 
@@ -105,9 +120,11 @@ export const handoverLogs = pgTable("handover_logs", {
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
 
+export const insertDepartmentSchema = createInsertSchema(departments).omit({ id: true, createdAt: true });
 export const insertFolderSchema = createInsertSchema(folders).omit({ id: true, createdAt: true });
 export const insertKnowledgeFileSchema = createInsertSchema(knowledgeFiles).omit({ id: true, uploadedAt: true });
 export const insertTaskSchema = createInsertSchema(tasks).omit({ id: true, createdAt: true, completedAt: true });
+export const insertTaskCommentSchema = createInsertSchema(taskComments).omit({ id: true, createdAt: true });
 export const insertIntelligencePostSchema = createInsertSchema(intelligencePosts).omit({ id: true, createdAt: true });
 export const insertChatSessionSchema = createInsertSchema(chatSessions).omit({ id: true, createdAt: true });
 export const insertChatMessageSchema = createInsertSchema(chatMessages).omit({ id: true, createdAt: true });
@@ -116,12 +133,16 @@ export const insertActivityLogSchema = createInsertSchema(activityLogs).omit({ i
 export const insertUserFavoriteSchema = createInsertSchema(userFavorites).omit({ id: true, createdAt: true });
 export const insertHandoverLogSchema = createInsertSchema(handoverLogs).omit({ id: true, createdAt: true });
 
+export type Department = typeof departments.$inferSelect;
+export type InsertDepartment = z.infer<typeof insertDepartmentSchema>;
 export type Folder = typeof folders.$inferSelect;
 export type InsertFolder = z.infer<typeof insertFolderSchema>;
 export type KnowledgeFile = typeof knowledgeFiles.$inferSelect;
 export type InsertKnowledgeFile = z.infer<typeof insertKnowledgeFileSchema>;
 export type Task = typeof tasks.$inferSelect;
 export type InsertTask = z.infer<typeof insertTaskSchema>;
+export type TaskComment = typeof taskComments.$inferSelect;
+export type InsertTaskComment = z.infer<typeof insertTaskCommentSchema>;
 export type IntelligencePost = typeof intelligencePosts.$inferSelect;
 export type InsertIntelligencePost = z.infer<typeof insertIntelligencePostSchema>;
 export type ChatSession = typeof chatSessions.$inferSelect;

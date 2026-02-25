@@ -549,8 +549,8 @@ ${activityInfo}
       const user = await storage.getUserById(req.user.claims.sub);
       if (!user) return res.status(404).json({ message: "User not found" });
       
-      const deptUsers = user.department ? 
-        (await storage.getAllUsers()).filter(u => u.department === user.department && u.id !== user.id) : 
+      const deptUsers = user.departmentId ? 
+        (await storage.getUsersByDepartmentId(user.departmentId)).filter(u => u.id !== user.id) : 
         [];
         
       res.json({
@@ -565,13 +565,12 @@ ${activityInfo}
   app.patch("/api/users/me", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const { firstName, profileImageUrl, department, superiorId } = req.body;
-      const user = await storage.updateUser(userId, {
-        firstName,
-        profileImageUrl,
-        department,
-        superiorId
-      });
+      const { firstName, profileImageUrl, departmentId, superiorId } = req.body;
+      const updateData: any = { firstName, profileImageUrl, superiorId };
+      if (departmentId !== undefined) {
+        updateData.departmentId = departmentId === null || departmentId === "" ? null : Number(departmentId);
+      }
+      const user = await storage.updateUser(userId, updateData);
       res.json(user);
     } catch (error) {
       res.status(500).json({ message: "Failed to update profile" });
@@ -653,6 +652,145 @@ ${activityInfo}
       res.json(logs);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch handover logs" });
+    }
+  });
+
+  // Department management (admin)
+  app.get("/api/departments", isAuthenticated, async (_req: any, res) => {
+    try {
+      const depts = await storage.getDepartments();
+      res.json(depts);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch departments" });
+    }
+  });
+
+  app.post("/api/admin/departments", isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUserById(req.user.claims.sub);
+      if (currentUser?.role !== "admin") return res.status(403).json({ message: "Forbidden" });
+      const { name, parentId } = req.body;
+      if (!name || typeof name !== "string") return res.status(400).json({ message: "Name is required" });
+      const dept = await storage.createDepartment({ name, parentId: parentId || null });
+      res.json(dept);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to create department" });
+    }
+  });
+
+  app.patch("/api/admin/departments/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUserById(req.user.claims.sub);
+      if (currentUser?.role !== "admin") return res.status(403).json({ message: "Forbidden" });
+      const { name } = req.body;
+      if (!name || typeof name !== "string") return res.status(400).json({ message: "Name is required" });
+      const dept = await storage.updateDepartment(Number(req.params.id), name);
+      res.json(dept);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update department" });
+    }
+  });
+
+  app.delete("/api/admin/departments/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUserById(req.user.claims.sub);
+      if (currentUser?.role !== "admin") return res.status(403).json({ message: "Forbidden" });
+      await storage.deleteDepartment(Number(req.params.id));
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete department" });
+    }
+  });
+
+  // Admin: update user type and department
+  app.patch("/api/admin/users/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUserById(req.user.claims.sub);
+      if (currentUser?.role !== "admin") return res.status(403).json({ message: "Forbidden" });
+      const { userType, departmentId } = req.body;
+      const updateData: any = {};
+      if (userType !== undefined) updateData.userType = userType;
+      if (departmentId !== undefined) updateData.departmentId = departmentId === null ? null : Number(departmentId);
+      const user = await storage.updateUser(req.params.id, updateData);
+      res.json(user);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update user" });
+    }
+  });
+
+  // Task comments
+  app.get("/api/tasks/:id/comments", isAuthenticated, async (req: any, res) => {
+    try {
+      const comments = await storage.getTaskComments(Number(req.params.id));
+      res.json(comments);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch comments" });
+    }
+  });
+
+  app.post("/api/tasks/:id/comments", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { content } = req.body;
+      if (!content || typeof content !== "string") return res.status(400).json({ message: "Content is required" });
+      const comment = await storage.createTaskComment({
+        taskId: Number(req.params.id),
+        userId,
+        content,
+      });
+      res.json(comment);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to create comment" });
+    }
+  });
+
+  // Department head: get subordinate tasks
+  app.get("/api/team-tasks", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUserById(userId);
+      if (!currentUser || currentUser.userType !== "department_head") {
+        return res.status(403).json({ message: "Only department heads can view team tasks" });
+      }
+      if (!currentUser.departmentId) {
+        return res.json([]);
+      }
+
+      const allUsers = await storage.getAllUsers();
+      const subordinateIds: string[] = [];
+
+      // Direct subordinates in same department (regular users)
+      const deptUsers = allUsers.filter(u => u.departmentId === currentUser.departmentId && u.id !== userId);
+      for (const u of deptUsers) {
+        if (u.userType === "user") {
+          subordinateIds.push(u.id);
+        }
+      }
+
+      // Sub-department heads who report to this user
+      const subHeads = allUsers.filter(u => u.superiorId === userId && u.userType === "department_head" && u.id !== userId);
+      for (const head of subHeads) {
+        subordinateIds.push(head.id);
+        // All regular users in the sub-head's department
+        if (head.departmentId) {
+          const subDeptUsers = allUsers.filter(u => u.departmentId === head.departmentId && u.userType === "user");
+          for (const u of subDeptUsers) {
+            if (!subordinateIds.includes(u.id)) subordinateIds.push(u.id);
+          }
+        }
+      }
+
+      const teamTasks = await storage.getTasksByUserIds(subordinateIds);
+      const usersMap = Object.fromEntries(allUsers.map(u => [u.id, { id: u.id, firstName: u.firstName, email: u.email, profileImageUrl: u.profileImageUrl }]));
+
+      res.json({
+        tasks: teamTasks,
+        users: usersMap,
+        subordinateIds,
+      });
+    } catch (error) {
+      console.error("Error fetching team tasks:", error);
+      res.status(500).json({ message: "Failed to fetch team tasks" });
     }
   });
 

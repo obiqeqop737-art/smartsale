@@ -7,18 +7,21 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { User, Building, UserCircle, Users, Camera, Loader2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Building, UserCircle, Users, Camera, Loader2, Crown } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
+import type { Department } from "@shared/schema";
 
 export default function ProfilePage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const { data: profile } = useQuery({ queryKey: ["/api/users/me"] });
+  const { data: departments = [] } = useQuery<Department[]>({ queryKey: ["/api/departments"] });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
     firstName: "",
     profileImageUrl: "",
-    department: "",
+    departmentId: "",
     superiorId: ""
   });
 
@@ -27,7 +30,7 @@ export default function ProfilePage() {
       setFormData({
         firstName: profile.firstName || "",
         profileImageUrl: profile.profileImageUrl || "",
-        department: profile.department || "",
+        departmentId: profile.departmentId?.toString() || "",
         superiorId: profile.superiorId || ""
       });
     }
@@ -90,6 +93,10 @@ export default function ProfilePage() {
     e.target.value = "";
   };
 
+  const currentDeptName = formData.departmentId
+    ? departments.find(d => d.id === Number(formData.departmentId))?.name || ""
+    : "";
+
   return (
     <div className="p-6 max-w-2xl mx-auto space-y-6">
       <h1 className="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-3">
@@ -99,8 +106,14 @@ export default function ProfilePage() {
 
       <Card className="glass-card">
         <CardHeader>
-          <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-300">
+          <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
             头像与基本信息
+            {profile?.userType === "department_head" && (
+              <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-400 border-amber-500/20 gap-0.5">
+                <Crown className="h-2.5 w-2.5" />
+                部门长
+              </Badge>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -142,23 +155,28 @@ export default function ProfilePage() {
               />
             </div>
             <div className="grid gap-2">
-              <label className="text-xs text-slate-500 dark:text-slate-400">部门</label>
-              <div className="flex gap-2 items-center">
-                <Building className="h-4 w-4 text-slate-400 shrink-0" />
-                <Input
-                  value={formData.department}
-                  onChange={e => setFormData({...formData, department: e.target.value})}
-                  placeholder="例如：销售部"
-                  className="glass-input"
-                  data-testid="input-department"
-                />
-              </div>
+              <label className="text-xs text-slate-500 dark:text-slate-400">所属部门</label>
+              <Select
+                value={formData.departmentId || "none"}
+                onValueChange={v => setFormData({...formData, departmentId: v === "none" ? "" : v})}
+              >
+                <SelectTrigger className="glass-input" data-testid="select-department">
+                  <Building className="h-4 w-4 text-slate-400 mr-2 shrink-0" />
+                  <SelectValue placeholder="选择部门" />
+                </SelectTrigger>
+                <SelectContent className="glass-dialog">
+                  <SelectItem value="none">未分配</SelectItem>
+                  {departments.map(d => (
+                    <SelectItem key={d.id} value={d.id.toString()}>{d.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="grid gap-2">
               <label className="text-xs text-slate-500 dark:text-slate-400">上级主管</label>
               <Select
-                value={formData.superiorId}
-                onValueChange={v => setFormData({...formData, superiorId: v})}
+                value={formData.superiorId || "none"}
+                onValueChange={v => setFormData({...formData, superiorId: v === "none" ? "" : v})}
               >
                 <SelectTrigger className="glass-input" data-testid="select-superior">
                   <SelectValue placeholder="选择上级" />
@@ -191,7 +209,12 @@ export default function ProfilePage() {
           </div>
 
           <Button
-            onClick={() => mutation.mutate(formData)}
+            onClick={() => mutation.mutate({
+              firstName: formData.firstName,
+              profileImageUrl: formData.profileImageUrl,
+              departmentId: formData.departmentId || null,
+              superiorId: formData.superiorId || null,
+            })}
             className="w-full glow-btn text-white border-0"
             disabled={mutation.isPending}
             data-testid="button-save-profile"

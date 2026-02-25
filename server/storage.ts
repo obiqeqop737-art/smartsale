@@ -1,8 +1,10 @@
 import {
-  folders, knowledgeFiles, tasks, intelligencePosts, chatSessions, chatMessages, activityLogs, dailySummaries, userFavorites, handoverLogs,
+  departments, folders, knowledgeFiles, tasks, taskComments, intelligencePosts, chatSessions, chatMessages, activityLogs, dailySummaries, userFavorites, handoverLogs,
+  type Department, type InsertDepartment,
   type Folder, type InsertFolder,
   type KnowledgeFile, type InsertKnowledgeFile,
   type Task, type InsertTask,
+  type TaskComment, type InsertTaskComment,
   type IntelligencePost, type InsertIntelligencePost,
   type ChatSession, type InsertChatSession,
   type ChatMessage, type InsertChatMessage,
@@ -13,9 +15,14 @@ import {
 } from "@shared/schema";
 import { users, type User } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, gte, sql, isNull, count, ne } from "drizzle-orm";
+import { eq, and, desc, gte, sql, isNull, count, ne, inArray } from "drizzle-orm";
 
 export interface IStorage {
+  getDepartments(): Promise<Department[]>;
+  createDepartment(dept: InsertDepartment): Promise<Department>;
+  updateDepartment(id: number, name: string): Promise<Department | undefined>;
+  deleteDepartment(id: number): Promise<void>;
+
   getFolders(userId: string): Promise<Folder[]>;
   createFolder(folder: InsertFolder): Promise<Folder>;
   renameFolder(id: number, userId: string, name: string): Promise<Folder | undefined>;
@@ -29,10 +36,14 @@ export interface IStorage {
   moveFile(id: number, userId: string, folderId: number | null): Promise<KnowledgeFile | undefined>;
 
   getTasks(userId: string): Promise<Task[]>;
+  getTasksByUserIds(userIds: string[]): Promise<Task[]>;
   createTask(task: InsertTask): Promise<Task>;
   updateTask(id: number, userId: string, data: Partial<Task>): Promise<Task | undefined>;
   deleteTask(id: number, userId: string): Promise<void>;
   getCompletedTasksToday(userId: string): Promise<Task[]>;
+
+  getTaskComments(taskId: number): Promise<TaskComment[]>;
+  createTaskComment(comment: InsertTaskComment): Promise<TaskComment>;
 
   getIntelligencePosts(): Promise<IntelligencePost[]>;
   createIntelligencePost(post: InsertIntelligencePost): Promise<IntelligencePost>;
@@ -67,12 +78,32 @@ export interface IStorage {
   getAllUsers(): Promise<User[]>;
   getUserById(id: string): Promise<User | undefined>;
   updateUser(id: string, data: Partial<User>): Promise<User | undefined>;
+  getUsersByDepartmentId(departmentId: number): Promise<User[]>;
   getUserAssetCounts(userId: string): Promise<{ files: number; folders: number; tasks: number; chatSessions: number }>;
   transferAssets(fromUserId: string, toUserId: string, operatorId: string, note?: string): Promise<HandoverLog>;
   getHandoverLogs(): Promise<HandoverLog[]>;
 }
 
 export class DatabaseStorage implements IStorage {
+  async getDepartments(): Promise<Department[]> {
+    return db.select().from(departments).orderBy(departments.name);
+  }
+
+  async createDepartment(dept: InsertDepartment): Promise<Department> {
+    const [result] = await db.insert(departments).values(dept).returning();
+    return result;
+  }
+
+  async updateDepartment(id: number, name: string): Promise<Department | undefined> {
+    const [result] = await db.update(departments).set({ name }).where(eq(departments.id, id)).returning();
+    return result;
+  }
+
+  async deleteDepartment(id: number): Promise<void> {
+    await db.update(departments).set({ parentId: null }).where(eq(departments.parentId, id));
+    await db.delete(departments).where(eq(departments.id, id));
+  }
+
   async getFolders(userId: string): Promise<Folder[]> {
     return db.select().from(folders).where(eq(folders.userId, userId)).orderBy(folders.sortOrder, folders.name);
   }
@@ -135,6 +166,11 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(tasks).where(eq(tasks.userId, userId)).orderBy(desc(tasks.createdAt));
   }
 
+  async getTasksByUserIds(userIds: string[]): Promise<Task[]> {
+    if (userIds.length === 0) return [];
+    return db.select().from(tasks).where(inArray(tasks.userId, userIds)).orderBy(desc(tasks.createdAt));
+  }
+
   async createTask(task: InsertTask): Promise<Task> {
     const [result] = await db.insert(tasks).values(task).returning();
     return result;
@@ -158,6 +194,15 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(tasks).where(
       and(eq(tasks.userId, userId), eq(tasks.status, "done"), gte(tasks.completedAt, today))
     );
+  }
+
+  async getTaskComments(taskId: number): Promise<TaskComment[]> {
+    return db.select().from(taskComments).where(eq(taskComments.taskId, taskId)).orderBy(desc(taskComments.createdAt));
+  }
+
+  async createTaskComment(comment: InsertTaskComment): Promise<TaskComment> {
+    const [result] = await db.insert(taskComments).values(comment).returning();
+    return result;
   }
 
   async getIntelligencePosts(): Promise<IntelligencePost[]> {
@@ -267,6 +312,10 @@ export class DatabaseStorage implements IStorage {
   async updateUser(id: string, data: Partial<User>): Promise<User | undefined> {
     const [user] = await db.update(users).set(data).where(eq(users.id, id)).returning();
     return user;
+  }
+
+  async getUsersByDepartmentId(departmentId: number): Promise<User[]> {
+    return db.select().from(users).where(eq(users.departmentId, departmentId));
   }
 
   async getUserAssetCounts(userId: string) {

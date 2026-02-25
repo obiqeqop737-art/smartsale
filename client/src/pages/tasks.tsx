@@ -30,6 +30,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   KanbanSquare,
   Plus,
@@ -44,8 +46,12 @@ import {
   Clock,
   ListTodo,
   Filter,
+  Users,
+  MessageCircle,
+  Send,
+  Crown,
 } from "lucide-react";
-import type { Task } from "@shared/schema";
+import type { Task, TaskComment } from "@shared/schema";
 
 const columns = [
   { key: "todo", label: "待办", color: "text-slate-400", borderColor: "border-slate-500/20" },
@@ -61,6 +67,8 @@ const priorityMap: Record<string, { label: string; color: string; bgColor: strin
 
 export default function TasksPage() {
   const { toast } = useToast();
+  const { user } = useAuth();
+  const [viewMode, setViewMode] = useState<"my" | "team">("my");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [deleteTaskId, setDeleteTaskId] = useState<number | null>(null);
@@ -74,18 +82,53 @@ export default function TasksPage() {
   });
   const [draggingId, setDraggingId] = useState<number | null>(null);
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
+  const [commentTaskId, setCommentTaskId] = useState<number | null>(null);
+  const [commentText, setCommentText] = useState("");
+
+  const isDeptHead = user?.userType === "department_head";
 
   const { data: tasks = [], isLoading } = useQuery<Task[]>({
     queryKey: ["/api/tasks"],
   });
 
+  const { data: teamData } = useQuery<{ tasks: Task[]; users: Record<string, any>; subordinateIds: string[] }>({
+    queryKey: ["/api/team-tasks"],
+    enabled: isDeptHead,
+  });
+
+  const { data: comments = [] } = useQuery<TaskComment[]>({
+    queryKey: ["/api/tasks", commentTaskId, "comments"],
+    queryFn: async () => {
+      if (!commentTaskId) return [];
+      const res = await fetch(`/api/tasks/${commentTaskId}/comments`, { credentials: "include" });
+      if (!res.ok) return [];
+      return res.json();
+    },
+    enabled: commentTaskId !== null,
+  });
+
+  const commentMutation = useMutation({
+    mutationFn: async ({ taskId, content }: { taskId: number; content: string }) => {
+      const res = await apiRequest("POST", `/api/tasks/${taskId}/comments`, { content });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/tasks", commentTaskId, "comments"] });
+      setCommentText("");
+      toast({ title: "点评已发送" });
+    },
+  });
+
+  const activeTasks = viewMode === "team" && teamData ? teamData.tasks : tasks;
+  const teamUsers = teamData?.users || {};
+
   const taskStats = useMemo(() => {
-    const total = tasks.length;
-    const todo = tasks.filter(t => t.status === "todo").length;
-    const inProgress = tasks.filter(t => t.status === "in_progress").length;
-    const done = tasks.filter(t => t.status === "done").length;
+    const total = activeTasks.length;
+    const todo = activeTasks.filter(t => t.status === "todo").length;
+    const inProgress = activeTasks.filter(t => t.status === "in_progress").length;
+    const done = activeTasks.filter(t => t.status === "done").length;
     return { total, todo, inProgress, done };
-  }, [tasks]);
+  }, [activeTasks]);
 
   const createTaskMutation = useMutation({
     mutationFn: async (data: typeof newTask) => {
@@ -176,7 +219,7 @@ export default function TasksPage() {
   };
 
   const getTasksByStatus = (status: string) => {
-    let filtered = tasks.filter((t) => t.status === status);
+    let filtered = activeTasks.filter((t) => t.status === status);
     if (priorityFilter) {
       filtered = filtered.filter((t) => t.priority === priorityFilter);
     }
@@ -206,6 +249,12 @@ export default function TasksPage() {
     });
   };
 
+  const getTaskOwnerName = (userId: string) => {
+    const u = teamUsers[userId];
+    if (!u) return userId.slice(0, 8);
+    return u.firstName || u.email || userId.slice(0, 8);
+  };
+
   return (
     <div className="flex h-full flex-col p-4 md:p-6" data-testid="page-tasks">
       <div className="mb-4 md:mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-4">
@@ -218,19 +267,56 @@ export default function TasksPage() {
           </h1>
           <p className="mt-1 text-sm text-slate-400 dark:text-slate-500">管理销售任务和跟进计划</p>
         </div>
-        <Button
-          onClick={() => {
-            setEditingTask(null);
-            setNewTask({ title: "", description: "", priority: "medium", assignedBy: "", dueDate: "" });
-            setDialogOpen(true);
-          }}
-          className="glow-btn text-white border-0"
-          data-testid="button-create-task"
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          新建任务
-        </Button>
+        <div className="flex items-center gap-2">
+          {isDeptHead && (
+            <div className="flex bg-slate-800/30 dark:bg-slate-800/50 rounded-lg p-0.5 border border-blue-500/10">
+              <button
+                onClick={() => setViewMode("my")}
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                  viewMode === "my" ? "bg-blue-500/20 text-blue-400 shadow-sm" : "text-slate-400 hover:text-slate-300"
+                }`}
+                data-testid="button-view-my-tasks"
+              >
+                我的任务
+              </button>
+              <button
+                onClick={() => setViewMode("team")}
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-1 ${
+                  viewMode === "team" ? "bg-amber-500/20 text-amber-400 shadow-sm" : "text-slate-400 hover:text-slate-300"
+                }`}
+                data-testid="button-view-team-tasks"
+              >
+                <Crown className="h-3 w-3" />
+                团队任务
+              </button>
+            </div>
+          )}
+          {viewMode === "my" && (
+            <Button
+              onClick={() => {
+                setEditingTask(null);
+                setNewTask({ title: "", description: "", priority: "medium", assignedBy: "", dueDate: "" });
+                setDialogOpen(true);
+              }}
+              className="glow-btn text-white border-0"
+              data-testid="button-create-task"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              新建任务
+            </Button>
+          )}
+        </div>
       </div>
+
+      {viewMode === "team" && isDeptHead && (
+        <div className="mb-3 flex items-center gap-2">
+          <Users className="h-4 w-4 text-amber-400" />
+          <span className="text-xs text-amber-400 font-medium">正在查看下属团队任务</span>
+          <Badge variant="outline" className="text-[10px] h-4 bg-amber-500/10 text-amber-400 border-amber-500/20">
+            {teamData?.subordinateIds?.length || 0} 人
+          </Badge>
+        </div>
+      )}
 
       <div className="mb-4 grid grid-cols-2 md:grid-cols-4 gap-3" data-testid="task-stats">
         <div className="glass-card rounded-lg px-4 py-3 flex items-center gap-3">
@@ -338,15 +424,26 @@ export default function TasksPage() {
                       return (
                         <div
                           key={task.id}
-                          draggable
-                          onDragStart={(e) => handleDragStart(e, task.id)}
-                          className={`glass-card glass-card-hover rounded-lg p-3 cursor-grab transition-all duration-200 active:cursor-grabbing group ${
-                            draggingId === task.id ? "opacity-40" : ""
-                          }`}
+                          draggable={viewMode === "my"}
+                          onDragStart={(e) => viewMode === "my" && handleDragStart(e, task.id)}
+                          className={`glass-card glass-card-hover rounded-lg p-3 transition-all duration-200 group ${
+                            viewMode === "my" ? "cursor-grab active:cursor-grabbing" : ""
+                          } ${draggingId === task.id ? "opacity-40" : ""}`}
                           data-testid={`task-card-${task.id}`}
                         >
+                          {viewMode === "team" && (
+                            <div className="flex items-center gap-1.5 mb-2">
+                              <Avatar className="h-4 w-4">
+                                <AvatarImage src={teamUsers[task.userId]?.profileImageUrl || ""} />
+                                <AvatarFallback className="bg-blue-500/10 text-blue-400 text-[8px]">
+                                  {getTaskOwnerName(task.userId)[0]}
+                                </AvatarFallback>
+                              </Avatar>
+                              <span className="text-[10px] text-blue-400 font-medium">{getTaskOwnerName(task.userId)}</span>
+                            </div>
+                          )}
                           <div className="mb-2 flex items-start justify-between gap-2">
-                            <GripVertical className="mt-0.5 h-3 w-3 shrink-0 text-slate-700 group-hover:text-blue-400/40" />
+                            {viewMode === "my" && <GripVertical className="mt-0.5 h-3 w-3 shrink-0 text-slate-700 group-hover:text-blue-400/40" />}
                             <h4 className="flex-1 text-sm font-medium leading-snug text-slate-800 dark:text-white">{task.title}</h4>
                             <div className={`shrink-0 rounded-full border px-1.5 py-0.5 text-[10px] ${prio.bgColor} ${prio.color}`}>
                               {prio.label}
@@ -369,23 +466,37 @@ export default function TasksPage() {
                             )}
                           </div>
                           <div className="mt-2 flex items-center justify-between">
-                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <button
-                                onClick={() => openEditDialog(task)}
-                                className="p-1 text-slate-500 hover:text-blue-400 rounded"
-                                data-testid={`button-edit-task-${task.id}`}
-                              >
-                                <Edit3 className="h-3 w-3" />
-                              </button>
-                              <button
-                                onClick={() => setDeleteTaskId(task.id)}
-                                className="p-1 text-slate-500 hover:text-red-400 rounded"
-                                data-testid={`button-delete-task-${task.id}`}
-                              >
-                                <Trash2 className="h-3 w-3" />
-                              </button>
+                            <div className="flex gap-1">
+                              {viewMode === "my" && (
+                                <>
+                                  <button
+                                    onClick={() => openEditDialog(task)}
+                                    className="p-1 text-slate-500 hover:text-blue-400 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                                    data-testid={`button-edit-task-${task.id}`}
+                                  >
+                                    <Edit3 className="h-3 w-3" />
+                                  </button>
+                                  <button
+                                    onClick={() => setDeleteTaskId(task.id)}
+                                    className="p-1 text-slate-500 hover:text-red-400 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                                    data-testid={`button-delete-task-${task.id}`}
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </button>
+                                </>
+                              )}
+                              {viewMode === "team" && isDeptHead && (
+                                <button
+                                  onClick={() => setCommentTaskId(task.id)}
+                                  className="flex items-center gap-0.5 p-1 text-amber-400 hover:text-amber-300 rounded transition-colors"
+                                  data-testid={`button-comment-task-${task.id}`}
+                                >
+                                  <MessageCircle className="h-3 w-3" />
+                                  <span className="text-[10px]">点评</span>
+                                </button>
+                              )}
                             </div>
-                            {task.status !== "done" && (
+                            {viewMode === "my" && task.status !== "done" && (
                               <div className="flex gap-1">
                                 {col.key === "todo" && (
                                   <button
@@ -438,7 +549,7 @@ export default function TasksPage() {
                 placeholder="任务标题"
                 value={newTask.title}
                 onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
-                className="glass-input text-slate-200"
+                className="glass-input"
                 data-testid="input-task-title"
               />
             </div>
@@ -448,7 +559,7 @@ export default function TasksPage() {
                 placeholder="任务描述 (可选)"
                 value={newTask.description}
                 onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
-                className="glass-input text-slate-200"
+                className="glass-input"
                 data-testid="input-task-description"
               />
             </div>
@@ -456,7 +567,7 @@ export default function TasksPage() {
               <div>
                 <label className="mb-1.5 block text-xs text-slate-500 dark:text-slate-400">优先级</label>
                 <Select value={newTask.priority} onValueChange={(v) => setNewTask({ ...newTask, priority: v })}>
-                  <SelectTrigger className="glass-input text-slate-200" data-testid="select-task-priority">
+                  <SelectTrigger className="glass-input" data-testid="select-task-priority">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="glass-dialog border-blue-500/20">
@@ -472,7 +583,7 @@ export default function TasksPage() {
                   type="date"
                   value={newTask.dueDate}
                   onChange={(e) => setNewTask({ ...newTask, dueDate: e.target.value })}
-                  className="glass-input text-slate-200"
+                  className="glass-input"
                   data-testid="input-task-due-date"
                 />
               </div>
@@ -483,7 +594,7 @@ export default function TasksPage() {
                 placeholder="指派人 (可选)"
                 value={newTask.assignedBy}
                 onChange={(e) => setNewTask({ ...newTask, assignedBy: e.target.value })}
-                className="glass-input text-slate-200"
+                className="glass-input"
                 data-testid="input-task-assigned-by"
               />
             </div>
@@ -509,6 +620,83 @@ export default function TasksPage() {
         </DialogContent>
       </Dialog>
 
+      <Dialog open={commentTaskId !== null} onOpenChange={(open) => { if (!open) setCommentTaskId(null); }}>
+        <DialogContent className="glass-dialog border-blue-500/20 sm:max-w-md">
+          <DialogHeader className="glass-dialog-header -mx-6 -mt-6 px-6 py-4 rounded-t-lg">
+            <DialogTitle className="flex items-center gap-2 text-blue-700 dark:text-blue-200">
+              <MessageCircle className="h-4 w-4 text-amber-400" />
+              任务点评
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            {commentTaskId && (() => {
+              const t = activeTasks.find(tt => tt.id === commentTaskId);
+              if (!t) return null;
+              return (
+                <div className="glass-card rounded-lg p-3 border border-blue-500/10">
+                  <p className="text-sm font-medium text-slate-700 dark:text-slate-200">{t.title}</p>
+                  {t.description && <p className="text-xs text-slate-400 mt-1">{t.description}</p>}
+                  <div className="flex items-center gap-2 mt-2">
+                    <Badge variant="outline" className={`text-[10px] ${priorityMap[t.priority]?.bgColor} ${priorityMap[t.priority]?.color}`}>
+                      {priorityMap[t.priority]?.label}
+                    </Badge>
+                    <span className="text-[10px] text-slate-500">{t.status === "todo" ? "待办" : t.status === "in_progress" ? "进行中" : "已完成"}</span>
+                    {viewMode === "team" && <span className="text-[10px] text-blue-400">{getTaskOwnerName(t.userId)}</span>}
+                  </div>
+                </div>
+              );
+            })()}
+
+            <ScrollArea className="max-h-[200px]">
+              <div className="space-y-2">
+                {comments.length === 0 && (
+                  <p className="text-xs text-slate-500 text-center py-4">暂无点评</p>
+                )}
+                {comments.map(c => (
+                  <div key={c.id} className="flex gap-2 items-start bg-blue-500/5 rounded-lg p-2 border border-blue-500/10">
+                    <Crown className="h-3 w-3 text-amber-400 mt-0.5 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-slate-700 dark:text-slate-200">{c.content}</p>
+                      <p className="text-[10px] text-slate-500 mt-1">
+                        {new Date(c.createdAt).toLocaleString("zh-CN")}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+
+            <div className="flex gap-2">
+              <Textarea
+                placeholder="输入点评内容..."
+                value={commentText}
+                onChange={e => setCommentText(e.target.value)}
+                className="glass-input resize-none h-16 flex-1"
+                data-testid="input-task-comment"
+              />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button variant="ghost" onClick={() => setCommentTaskId(null)} className="text-slate-400 hover:text-slate-200">
+                关闭
+              </Button>
+              <Button
+                onClick={() => {
+                  if (commentTaskId && commentText.trim()) {
+                    commentMutation.mutate({ taskId: commentTaskId, content: commentText.trim() });
+                  }
+                }}
+                disabled={!commentText.trim() || commentMutation.isPending}
+                className="glow-btn text-white border-0 gap-1"
+                data-testid="button-submit-comment"
+              >
+                {commentMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
+                发送点评
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <AlertDialog open={deleteTaskId !== null} onOpenChange={(open) => !open && setDeleteTaskId(null)}>
         <AlertDialogContent className="glass-dialog border-blue-500/20">
           <AlertDialogHeader>
@@ -519,8 +707,7 @@ export default function TasksPage() {
             <AlertDialogCancel className="text-slate-400 border-blue-500/15 hover:bg-blue-500/10">取消</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => deleteTaskId && deleteTaskMutation.mutate(deleteTaskId)}
-              className="bg-red-500/80 hover:bg-red-500 text-white"
-              data-testid="button-confirm-delete-task"
+              className="bg-red-600 hover:bg-red-700 text-white border-0"
             >
               确认删除
             </AlertDialogAction>
