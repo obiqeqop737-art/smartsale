@@ -683,9 +683,14 @@ ${activityInfo}
     try {
       const currentUser = await storage.getUserById(req.user.claims.sub);
       if (currentUser?.role !== "admin") return res.status(403).json({ message: "Forbidden" });
-      const { name } = req.body;
+      const { name, parentId } = req.body;
       if (!name || typeof name !== "string") return res.status(400).json({ message: "Name is required" });
-      const dept = await storage.updateDepartment(Number(req.params.id), name);
+      const deptId = Number(req.params.id);
+      if (parentId === deptId) return res.status(400).json({ message: "Cannot set self as parent" });
+      const dept = await storage.updateDepartment(deptId, {
+        name,
+        parentId: parentId !== undefined ? (parentId || null) : undefined,
+      });
       res.json(dept);
     } catch (error) {
       res.status(500).json({ message: "Failed to update department" });

@@ -20,7 +20,7 @@ import { eq, and, desc, gte, sql, isNull, count, ne, inArray } from "drizzle-orm
 export interface IStorage {
   getDepartments(): Promise<Department[]>;
   createDepartment(dept: InsertDepartment): Promise<Department>;
-  updateDepartment(id: number, name: string): Promise<Department | undefined>;
+  updateDepartment(id: number, data: { name: string; parentId?: number | null }): Promise<Department | undefined>;
   deleteDepartment(id: number): Promise<void>;
 
   getFolders(userId: string): Promise<Folder[]>;
@@ -94,8 +94,12 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
-  async updateDepartment(id: number, name: string): Promise<Department | undefined> {
-    const [result] = await db.update(departments).set({ name }).where(eq(departments.id, id)).returning();
+  async updateDepartment(id: number, data: { name: string; parentId?: number | null }): Promise<Department | undefined> {
+    const updateData: any = { name: data.name };
+    if (data.parentId !== undefined) {
+      updateData.parentId = data.parentId;
+    }
+    const [result] = await db.update(departments).set(updateData).where(eq(departments.id, id)).returning();
     return result;
   }
 

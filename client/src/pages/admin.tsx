@@ -120,8 +120,8 @@ export default function AdminPage() {
   });
 
   const updateDeptMutation = useMutation({
-    mutationFn: async ({ id, name }: { id: number; name: string }) => {
-      const res = await apiRequest("PATCH", `/api/admin/departments/${id}`, { name });
+    mutationFn: async ({ id, name, parentId }: { id: number; name: string; parentId: number | null }) => {
+      const res = await apiRequest("PATCH", `/api/admin/departments/${id}`, { name, parentId });
       return res.json();
     },
     onSuccess: () => {
@@ -129,6 +129,7 @@ export default function AdminPage() {
       setDeptDialogOpen(false);
       setEditingDept(null);
       setDeptName("");
+      setDeptParentId("");
       toast({ title: "部门已更新" });
     },
   });
@@ -510,34 +511,33 @@ export default function AdminPage() {
                 data-testid="input-dept-name"
               />
             </div>
-            {!editingDept && (
-              <div>
-                <label className="mb-1.5 block text-xs text-slate-500 dark:text-slate-400">上级部门（可选）</label>
-                <Select value={deptParentId} onValueChange={setDeptParentId}>
-                  <SelectTrigger className="glass-input" data-testid="select-dept-parent">
-                    <SelectValue placeholder="无上级部门" />
-                  </SelectTrigger>
-                  <SelectContent className="glass-dialog border-blue-500/20">
-                    <SelectItem value="none">无</SelectItem>
-                    {departments.filter(d => d.id !== editingDept?.id).map(d => (
-                      <SelectItem key={d.id} value={d.id.toString()}>{d.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+            <div>
+              <label className="mb-1.5 block text-xs text-slate-500 dark:text-slate-400">上级部门（可选）</label>
+              <Select value={deptParentId || "none"} onValueChange={setDeptParentId}>
+                <SelectTrigger className="glass-input" data-testid="select-dept-parent">
+                  <SelectValue placeholder="无上级部门" />
+                </SelectTrigger>
+                <SelectContent className="glass-dialog border-blue-500/20">
+                  <SelectItem value="none">无（顶级部门）</SelectItem>
+                  {departments.filter(d => d.id !== editingDept?.id).map(d => (
+                    <SelectItem key={d.id} value={d.id.toString()}>{d.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="flex gap-2 justify-end">
               <Button variant="ghost" onClick={() => { setDeptDialogOpen(false); setEditingDept(null); }} className="text-slate-400 hover:text-slate-200">
                 取消
               </Button>
               <Button
                 onClick={() => {
+                  const resolvedParentId = deptParentId && deptParentId !== "none" ? Number(deptParentId) : null;
                   if (editingDept) {
-                    updateDeptMutation.mutate({ id: editingDept.id, name: deptName });
+                    updateDeptMutation.mutate({ id: editingDept.id, name: deptName, parentId: resolvedParentId });
                   } else {
                     createDeptMutation.mutate({
                       name: deptName,
-                      parentId: deptParentId && deptParentId !== "none" ? Number(deptParentId) : null,
+                      parentId: resolvedParentId,
                     });
                   }
                 }}
