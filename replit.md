@@ -26,7 +26,7 @@ An enterprise document management platform built with Express + React + PostgreS
 
 ## Key Features
 - **Knowledge Base**: 3-level folder tree, file upload with batch progress, RAG AI chat
-- **Intelligence Radar**: News cards with detail dialog, AI insights, favorite/share
+- **Intelligence Radar**: News cards with detail dialog, AI insights, favorite/share, daily AI auto-update at 12:00 (scheduler), admin manual trigger
 - **Task Kanban**: Drag-drop columns, edit/delete dialogs, priority badges, deadline alerts
 - **Team Tasks**: Department heads can view subordinate tasks and add comments/reviews
 - **Daily Summary**: AI-generated structured sales daily report with copy/export

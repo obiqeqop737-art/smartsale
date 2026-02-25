@@ -5,6 +5,7 @@ import { setupAuth, isAuthenticated, registerAuthRoutes } from "./replit_integra
 import { GoogleGenAI } from "@google/genai";
 import multer from "multer";
 import * as mammoth from "mammoth";
+import { generateIntelligence, getSchedulerStatus } from "./intelligence-scheduler";
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
@@ -791,6 +792,29 @@ ${activityInfo}
     } catch (error) {
       console.error("Error fetching team tasks:", error);
       res.status(500).json({ message: "Failed to fetch team tasks" });
+    }
+  });
+
+  app.get("/api/intelligence-scheduler/status", isAuthenticated, async (req: any, res) => {
+    try {
+      res.json(getSchedulerStatus());
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get scheduler status" });
+    }
+  });
+
+  app.post("/api/intelligence-scheduler/trigger", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentUser = await storage.getUser(userId);
+      if (currentUser?.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      const count = await generateIntelligence();
+      res.json({ success: true, count, message: `成功生成 ${count} 条情报` });
+    } catch (error: any) {
+      console.error("Manual intelligence generation failed:", error);
+      res.status(500).json({ message: "情报生成失败: " + (error.message || "未知错误") });
     }
   });
 

@@ -9,8 +9,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Radar, TrendingUp, Building2, Link2, Sparkles, ExternalLink, Star, Share2, Search, X, Flame } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Radar, TrendingUp, Building2, Link2, Sparkles, ExternalLink, Star, Share2, Search, X, Flame, Clock, RefreshCw, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 import type { IntelligencePost } from "@shared/schema";
 
 const categoryConfig: Record<string, { icon: typeof Radar; color: string; label: string; bgClass: string; activeBg: string }> = {
@@ -21,6 +28,7 @@ const categoryConfig: Record<string, { icon: typeof Radar; color: string; label:
 
 export default function IntelligencePage() {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [selectedPost, setSelectedPost] = useState<IntelligencePost | null>(null);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
@@ -34,6 +42,16 @@ export default function IntelligencePage() {
     queryKey: ["/api/intelligence-posts/favorites"],
   });
 
+  const { data: schedulerStatus } = useQuery<{
+    running: boolean;
+    nextUpdateAt: string;
+    lastGeneratedAt: string | null;
+    schedule: string;
+  }>({
+    queryKey: ["/api/intelligence-scheduler/status"],
+    refetchInterval: 60000,
+  });
+
   const toggleFavoriteMutation = useMutation({
     mutationFn: async (id: number) => {
       const res = await apiRequest("POST", `/api/intelligence-posts/${id}/favorite`);
@@ -42,6 +60,21 @@ export default function IntelligencePage() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/intelligence-posts/favorites"] });
       toast({ title: data.isFavorite ? "已加入收藏" : "已取消收藏" });
+    },
+  });
+
+  const triggerMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/intelligence-scheduler/trigger");
+      return res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/intelligence-posts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/intelligence-scheduler/status"] });
+      toast({ title: data.message || "情报更新成功" });
+    },
+    onError: (err: Error) => {
+      toast({ title: "更新失败", description: err.message, variant: "destructive" });
     },
   });
 
@@ -101,23 +134,70 @@ export default function IntelligencePage() {
             </div>
             情报雷达
           </h1>
-          <p className="mt-1 text-sm text-slate-400 dark:text-slate-500">锂电池及新能源行业实时情报追踪</p>
+          <div className="mt-1 flex items-center gap-3">
+            <p className="text-sm text-slate-400 dark:text-slate-500">锂电池及新能源行业实时情报追踪</p>
+            {schedulerStatus && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 cursor-default">
+                      <div className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      <span className="text-[10px] text-emerald-400 font-medium">{schedulerStatus.schedule}</span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent className="glass-dialog border-blue-500/20 text-xs">
+                    <p>下次更新: {new Date(schedulerStatus.nextUpdateAt).toLocaleString("zh-CN")}</p>
+                    {schedulerStatus.lastGeneratedAt && (
+                      <p>上次生成: {new Date(schedulerStatus.lastGeneratedAt).toLocaleString("zh-CN")}</p>
+                    )}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+          </div>
         </div>
-        <div className="relative w-full md:w-64">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
-          <input
-            type="text"
-            placeholder="搜索情报标题、摘要、标签..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full h-9 pl-9 pr-8 rounded-lg text-sm glass-input text-slate-600 dark:text-slate-300 placeholder:text-slate-400 dark:placeholder:text-slate-600"
-            data-testid="input-intel-search"
-          />
-          {searchQuery && (
-            <button onClick={() => setSearchQuery("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300" data-testid="button-clear-search">
-              <X className="h-3.5 w-3.5" />
-            </button>
+        <div className="flex items-center gap-2">
+          {user?.role === "admin" && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 rounded-lg border border-blue-500/15 text-blue-400/60 hover:text-blue-400 hover:bg-blue-500/10"
+                    onClick={() => triggerMutation.mutate()}
+                    disabled={triggerMutation.isPending}
+                    data-testid="button-trigger-intel-update"
+                  >
+                    {triggerMutation.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <RefreshCw className="h-4 w-4" />
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="glass-dialog border-blue-500/20 text-xs">
+                  手动触发 AI 情报更新
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           )}
+          <div className="relative w-full md:w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+            <input
+              type="text"
+              placeholder="搜索情报标题、摘要、标签..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full h-9 pl-9 pr-8 rounded-lg text-sm glass-input text-slate-600 dark:text-slate-300 placeholder:text-slate-400 dark:placeholder:text-slate-600"
+              data-testid="input-intel-search"
+            />
+            {searchQuery && (
+              <button onClick={() => setSearchQuery("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300" data-testid="button-clear-search">
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
