@@ -556,6 +556,21 @@ ${activityInfo}
     }
   });
 
+  app.delete("/api/daily-summary/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const summaryId = parseInt(req.params.id);
+      const deleted = await storage.deleteDailySummary(summaryId, userId);
+      if (!deleted) {
+        return res.status(400).json({ message: "无法删除：日报不存在或已发送给领导" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting summary:", error);
+      res.status(500).json({ message: "删除日报失败" });
+    }
+  });
+
   app.get("/api/daily-summaries/received", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;

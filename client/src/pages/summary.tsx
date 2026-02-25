@@ -7,6 +7,16 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {
@@ -20,7 +30,7 @@ import {
   Clock,
   Send,
   Inbox,
-  ChevronRight,
+  Trash2,
   Users,
 } from "lucide-react";
 import type { DailySummary } from "@shared/schema";
@@ -36,6 +46,7 @@ export default function SummaryPage() {
   const [showHistory, setShowHistory] = useState(true);
   const [viewMode, setViewMode] = useState<"my" | "received">("my");
   const [selectedReceivedId, setSelectedReceivedId] = useState<number | null>(null);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
 
   const { data: historyList = [] } = useQuery<DailySummary[]>({
     queryKey: ["/api/daily-summaries"],
@@ -98,6 +109,26 @@ export default function SummaryPage() {
     },
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await apiRequest("DELETE", `/api/daily-summary/${id}`);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/daily-summaries"] });
+      if (selectedHistoryId === deleteId) {
+        setSelectedHistoryId(null);
+        setSummaryContent("");
+      }
+      setDeleteId(null);
+      toast({ title: "已删除日报" });
+    },
+    onError: (e: Error) => {
+      setDeleteId(null);
+      toast({ title: "删除失败", description: e.message, variant: "destructive" });
+    },
+  });
+
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(summaryContent);
@@ -151,7 +182,6 @@ export default function SummaryPage() {
   const currentSelectedSummary = selectedHistoryId ? historyList.find(h => h.id === selectedHistoryId) : null;
   const currentReceivedSummary = selectedReceivedId ? receivedList.find(r => r.id === selectedReceivedId) : null;
 
-  const canSend = summaryContent && !generateMutation.isPending && viewMode === "my";
   const activeSummaryId = selectedHistoryId || (historyList.length > 0 ? historyList[0]?.id : null);
   const isCurrentSent = currentSelectedSummary?.status === "sent" || (!selectedHistoryId && todaySentSummary);
 
@@ -204,30 +234,38 @@ export default function SummaryPage() {
                   </div>
                 ) : (
                   historyList.map((item) => (
-                    <button
+                    <div
                       key={item.id}
-                      onClick={() => handleSelectHistory(item)}
-                      className={`w-full text-left rounded-lg p-3 transition-all ${
+                      className={`group w-full text-left rounded-lg p-3 transition-all cursor-pointer ${
                         selectedHistoryId === item.id
                           ? "bg-blue-500/10 border border-blue-500/20 glow-border-active"
                           : "hover:bg-blue-500/5 border border-transparent"
                       }`}
+                      onClick={() => handleSelectHistory(item)}
                       data-testid={`history-item-${item.id}`}
                     >
                       <div className="flex items-center gap-2">
                         <Calendar className="h-3 w-3 text-blue-400 shrink-0" />
                         <span className="text-xs font-medium text-slate-600 dark:text-slate-300">{formatHistoryDate(item.date)}</span>
                         <span className="text-[10px] text-slate-400 dark:text-slate-600">{formatHistoryDay(item.date)}</span>
-                        {item.status === "sent" && (
+                        {item.status === "sent" ? (
                           <Badge className="ml-auto text-[9px] h-4 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-300 dark:border-emerald-500/20 px-1">
                             已发送
                           </Badge>
+                        ) : (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setDeleteId(item.id); }}
+                            className="ml-auto p-0.5 rounded text-slate-400 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
+                            data-testid={`button-delete-summary-${item.id}`}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
                         )}
                       </div>
                       <p className="mt-1.5 text-[10px] text-slate-400 dark:text-slate-500 line-clamp-2 pl-5">
                         {item.content.slice(0, 80)}...
                       </p>
-                    </button>
+                    </div>
                   ))
                 )}
               </div>
@@ -288,87 +326,42 @@ export default function SummaryPage() {
             </h1>
             <p className="mt-1 text-sm text-slate-400 dark:text-slate-500">一键生成结构化工作日报，发送给领导审阅</p>
           </div>
-          <div className="flex gap-2 flex-wrap">
-            {summaryContent && viewMode === "my" && (
-              <>
-                <Button
-                  variant="ghost"
-                  onClick={handleCopy}
-                  className="text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 border border-blue-500/15"
-                  data-testid="button-copy-summary"
-                >
-                  {copied ? <CheckCircle className="mr-2 h-4 w-4 text-emerald-400" /> : <Copy className="mr-2 h-4 w-4" />}
-                  {copied ? "已复制" : "复制"}
-                </Button>
-                <Button
-                  variant="ghost"
-                  onClick={handleExport}
-                  className="text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 border border-blue-500/15"
-                  data-testid="button-export-summary"
-                >
-                  <Download className="mr-2 h-4 w-4" />
-                  导出
-                </Button>
-                {canSend && activeSummaryId && !isCurrentSent && (
-                  <Button
-                    onClick={() => activeSummaryId && sendMutation.mutate(activeSummaryId)}
-                    disabled={sendMutation.isPending}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white border-0"
-                    data-testid="button-send-summary"
-                  >
-                    {sendMutation.isPending ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                      <Send className="mr-2 h-4 w-4" />
-                    )}
-                    发送给领导
-                  </Button>
-                )}
-                {isCurrentSent && (
-                  <Badge className="self-center bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-300 dark:border-emerald-500/20 px-3 py-1.5">
-                    <CheckCircle className="mr-1.5 h-3.5 w-3.5" />
-                    已发送
-                  </Badge>
-                )}
-              </>
-            )}
-            {viewMode === "my" && (
-              <Button
-                onClick={() => {
-                  setSelectedHistoryId(null);
-                  setSelectedReceivedId(null);
-                  setSummaryContent("");
-                  generateMutation.mutate();
-                }}
-                disabled={generateMutation.isPending}
-                className="glow-btn text-white border-0"
-                data-testid="button-generate-summary"
-              >
-                {generateMutation.isPending ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <Sparkles className="mr-2 h-4 w-4" />
-                )}
-                {generateMutation.isPending ? "生成中..." : "一键生成日报"}
-              </Button>
-            )}
-          </div>
+          {viewMode === "my" && (
+            <Button
+              onClick={() => {
+                setSelectedHistoryId(null);
+                setSelectedReceivedId(null);
+                setSummaryContent("");
+                generateMutation.mutate();
+              }}
+              disabled={generateMutation.isPending}
+              className="glow-btn text-white border-0 h-9 px-5"
+              data-testid="button-generate-summary"
+            >
+              {generateMutation.isPending ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Sparkles className="mr-2 h-4 w-4" />
+              )}
+              {generateMutation.isPending ? "生成中..." : "一键生成日报"}
+            </Button>
+          )}
         </div>
 
-        <div className="flex-1 glass-card rounded-xl overflow-hidden">
-          <div className="glass-dialog-header px-6 py-3 flex items-center justify-between">
-            <div className="flex items-center gap-2">
+        <div className="flex-1 glass-card rounded-xl overflow-hidden flex flex-col">
+          <div className="glass-dialog-header px-4 md:px-6 py-3 flex items-center justify-between gap-2 shrink-0">
+            <div className="flex items-center gap-2 min-w-0">
               {viewMode === "received" && currentReceivedSummary ? (
                 <>
-                  <Users className="h-4 w-4 text-amber-500 dark:text-amber-400" />
-                  <span className="text-sm font-medium text-amber-700 dark:text-amber-200">
+                  <Users className="h-4 w-4 text-amber-500 dark:text-amber-400 shrink-0" />
+                  <span className="text-sm font-medium text-amber-700 dark:text-amber-200 truncate">
                     {currentReceivedSummary.userName || "未知用户"} 的日报 - {formatHistoryDate(currentReceivedSummary.date)}
                   </span>
                 </>
               ) : (
                 <>
-                  <FileText className="h-4 w-4 text-blue-400" />
-                  <span className="text-sm font-medium text-blue-700 dark:text-blue-200">
+                  <FileText className="h-4 w-4 text-blue-400 shrink-0" />
+                  <span className="text-sm font-medium text-blue-700 dark:text-blue-200 truncate">
                     {selectedHistoryId
                       ? `历史日报 - ${historyList.find(h => h.id === selectedHistoryId)?.date || ""}`
                       : `工作日报 - ${new Date().toLocaleDateString("zh-CN", {
@@ -382,25 +375,68 @@ export default function SummaryPage() {
                 </>
               )}
             </div>
-            {(selectedHistoryId || selectedReceivedId) && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setSelectedHistoryId(null);
-                  setSelectedReceivedId(null);
-                  setSummaryContent("");
-                  setViewMode("my");
-                }}
-                className="text-xs text-blue-400 hover:text-blue-300 h-6 px-2"
-                data-testid="button-return-today"
-              >
-                返回当天
-              </Button>
+
+            {summaryContent && (
+              <div className="flex items-center gap-1.5 shrink-0">
+                {viewMode === "my" && (
+                  <>
+                    <button
+                      onClick={handleCopy}
+                      className="h-7 px-2 rounded-md text-[11px] font-medium text-slate-500 dark:text-slate-400 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-blue-500/10 border border-transparent hover:border-blue-500/15 transition-all flex items-center gap-1"
+                      data-testid="button-copy-summary"
+                    >
+                      {copied ? <CheckCircle className="h-3 w-3 text-emerald-500" /> : <Copy className="h-3 w-3" />}
+                      {copied ? "已复制" : "复制"}
+                    </button>
+                    <button
+                      onClick={handleExport}
+                      className="h-7 px-2 rounded-md text-[11px] font-medium text-slate-500 dark:text-slate-400 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-blue-500/10 border border-transparent hover:border-blue-500/15 transition-all flex items-center gap-1"
+                      data-testid="button-export-summary"
+                    >
+                      <Download className="h-3 w-3" />
+                      导出
+                    </button>
+                    <div className="w-px h-4 bg-slate-200 dark:bg-slate-700/50 mx-0.5" />
+                    {isCurrentSent ? (
+                      <span className="h-7 px-2.5 rounded-md text-[11px] font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-500/20 flex items-center gap-1">
+                        <CheckCircle className="h-3 w-3" />
+                        已发送
+                      </span>
+                    ) : activeSummaryId && !generateMutation.isPending ? (
+                      <button
+                        onClick={() => activeSummaryId && sendMutation.mutate(activeSummaryId)}
+                        disabled={sendMutation.isPending}
+                        className="h-7 px-3 rounded-md text-[11px] font-medium bg-emerald-600 hover:bg-emerald-700 text-white transition-all flex items-center gap-1 disabled:opacity-50"
+                        data-testid="button-send-summary"
+                      >
+                        {sendMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
+                        发送给领导
+                      </button>
+                    ) : null}
+                  </>
+                )}
+                {(selectedHistoryId || selectedReceivedId) && (
+                  <>
+                    {viewMode === "my" && <div className="w-px h-4 bg-slate-200 dark:bg-slate-700/50 mx-0.5" />}
+                    <button
+                      onClick={() => {
+                        setSelectedHistoryId(null);
+                        setSelectedReceivedId(null);
+                        setSummaryContent("");
+                        setViewMode("my");
+                      }}
+                      className="h-7 px-2 rounded-md text-[11px] font-medium text-blue-500 dark:text-blue-400 hover:bg-blue-500/10 transition-all"
+                      data-testid="button-return-today"
+                    >
+                      返回当天
+                    </button>
+                  </>
+                )}
+              </div>
             )}
           </div>
 
-          <div className="p-6 h-[calc(100%-48px)]">
+          <div className="flex-1 p-6 min-h-0">
             {!summaryContent && !generateMutation.isPending ? (
               <div className="flex flex-col items-center justify-center h-full text-center">
                 <div className="h-20 w-20 rounded-full bg-blue-500/5 border border-blue-500/15 flex items-center justify-center mb-6">
@@ -425,7 +461,7 @@ export default function SummaryPage() {
                   <Loader2 className="h-4 w-4 animate-spin text-blue-400" />
                   正在读取您的工作数据并生成日报...
                 </div>
-                <div className="h-1 rounded-full bg-slate-800 overflow-hidden">
+                <div className="h-1 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
                   <div className="h-full w-1/3 progress-glow" />
                 </div>
                 <div className="space-y-3">
@@ -444,6 +480,25 @@ export default function SummaryPage() {
           </div>
         </div>
       </div>
+
+      <AlertDialog open={deleteId !== null} onOpenChange={(open) => !open && setDeleteId(null)}>
+        <AlertDialogContent className="glass-dialog border-blue-500/20">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-blue-700 dark:text-blue-200">确认删除日报</AlertDialogTitle>
+            <AlertDialogDescription className="text-slate-500 dark:text-slate-400">此操作将永久删除该日报记录，且无法恢复。确定要继续吗？</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="text-slate-400 border-blue-500/15 hover:bg-blue-500/10">取消</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteId && deleteMutation.mutate(deleteId)}
+              className="bg-red-600 hover:bg-red-700 text-white border-0"
+              data-testid="button-confirm-delete-summary"
+            >
+              确认删除
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

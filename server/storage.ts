@@ -319,6 +319,15 @@ export class DatabaseStorage implements IStorage {
     }));
   }
 
+  async deleteDailySummary(id: number, userId: string): Promise<boolean> {
+    const [existing] = await db.select().from(dailySummaries).where(
+      and(eq(dailySummaries.id, id), eq(dailySummaries.userId, userId))
+    );
+    if (!existing || existing.status === "sent") return false;
+    await db.delete(dailySummaries).where(eq(dailySummaries.id, id));
+    return true;
+  }
+
   async getDashboardStats(userId: string) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
