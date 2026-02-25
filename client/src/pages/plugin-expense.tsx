@@ -310,18 +310,18 @@ export default function PluginExpensePage() {
             返回
           </Button>
         </div>
-        <div className="glass-card rounded-xl p-5 space-y-4 border border-purple-500/15">
-          <div className="flex items-center gap-2 mb-1">
+        <div className="glass-card rounded-xl p-5 border border-purple-500/15">
+          <div className="flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-purple-400" />
             <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">AI 一句话填单</span>
             <Badge variant="outline" className="text-[9px] h-4 bg-purple-500/10 text-purple-400 border-purple-500/20">
               智能识别
             </Badge>
           </div>
-          <p className="text-xs text-slate-400 dark:text-slate-500 -mt-2">
+          <p className="text-xs text-slate-400 dark:text-slate-500 mt-1 mb-3">
             用自然语言描述您的出差或报销需求，AI 将自动识别并填写表单字段
           </p>
-          <div className="relative mt-[6px] mb-[6px]">
+          <div className="relative">
             <textarea
               ref={aiInputRef}
               value={aiInput}
@@ -341,7 +341,7 @@ export default function PluginExpensePage() {
               {aiParsing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
             </Button>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 mt-3">
             {aiExamples.map((ex, i) => (
               <button
                 key={i}
