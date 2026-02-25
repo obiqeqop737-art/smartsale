@@ -335,7 +335,7 @@ export default function PluginExpensePage() {
               size="icon"
               onClick={handleAIParse}
               disabled={!aiInput.trim() || aiParsing}
-              className="absolute right-2 bottom-2 h-8 w-8 rounded-lg glow-btn text-white border-0"
+              className="absolute right-3 bottom-3 h-8 w-8 rounded-lg glow-btn text-white border-0"
               data-testid="button-ai-parse"
             >
               {aiParsing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
