@@ -35,7 +35,7 @@ An enterprise document management platform built with Express + React + PostgreS
 - **Department Management**: Admin CRUD for departments with parent hierarchy
 - **Profile**: Avatar upload (local file), department selection from DB, superior selection
 - **Plugin Hub**: Grid layout with enterprise plugin cards; only "内部报销审批" and "CRM客户管理" are connectable (rest show "敬请期待"); connected plugins auto-appear in sidebar as nav entries; state shared via PluginProvider context + localStorage
-- **Mobile Responsive**: Sidebar overlay, collapsible panels, horizontal scroll kanban
+- **Mobile Responsive**: Full mobile optimization with slide-in sidebar animation, collapsible kanban columns, bottom sheet drawers for knowledge folders and summary history, horizontal scroll filter tags, safe-area support, 44px touch targets, 16px font inputs (prevent iOS zoom)
 
 ## User Types & Roles
 - `role`: "admin" or "user" - controls access to admin panel
@@ -50,13 +50,15 @@ An enterprise document management platform built with Express + React + PostgreS
 - User data in `users` table, upserted on login
 
 ## CSS Classes (Glassmorphism)
-- `glass-card` / `glass-card-hover` - Semi-transparent card with blur
+- `glass-card` / `glass-card-hover` - Semi-transparent card with blur (reduced blur on mobile)
 - `glass-sidebar` - Sidebar with backdrop blur
-- `glass-dialog` / `glass-dialog-header` - Dialog with blur and gradient header
-- `glass-input` - Input with blur and focus glow (dark mode: light text color)
-- `glow-btn` - Blue gradient button with glow
+- `glass-dialog` / `glass-dialog-header` - Dialog with blur and gradient header (mobile: max-height 100dvh-2rem, max-width 100vw-1.5rem)
+- `glass-input` - Input with blur and focus glow (dark mode: light text color, mobile: min-height 44px)
+- `glow-btn` - Blue gradient button with glow (mobile: min-height 44px)
 - `glow-border` / `glow-border-active` - Blue glow border effects
 - `glow-text` - Text with blue glow shadow
+- `scrollbar-hide` - Hide scrollbars (used for horizontal scroll filter tags)
+- `safe-area-bottom` / `safe-area-top` - iOS safe area inset padding
 
 ## Project Structure
 ```

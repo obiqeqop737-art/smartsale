@@ -156,12 +156,12 @@ export default function DashboardPage() {
   if (isLoading) {
     return (
       <div className="p-4 md:p-6 space-y-6" data-testid="page-dashboard">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-32 rounded-xl glass-card animate-pulse" />
+            <div key={i} className="h-24 sm:h-32 rounded-xl glass-card animate-pulse" />
           ))}
         </div>
-        <div className="grid gap-4 lg:grid-cols-3">
+        <div className="grid gap-3 sm:gap-4 lg:grid-cols-3">
           {Array.from({ length: 3 }).map((_, i) => (
             <div key={i} className="h-64 rounded-xl glass-card animate-pulse" />
           ))}
@@ -186,23 +186,23 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         {statCards.map((card) => (
           <Link key={card.label} href={card.link}>
-            <div className={`glass-card glass-card-hover rounded-xl p-5 cursor-pointer transition-all duration-300 group relative overflow-hidden`}
+            <div className={`glass-card glass-card-hover rounded-xl p-3 sm:p-5 cursor-pointer transition-all duration-300 group relative overflow-hidden`}
                  data-testid={`stat-card-${card.label}`}>
               <div className={`absolute inset-0 bg-gradient-to-br ${card.color} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
-              <div className="relative flex items-start justify-between">
-                <div>
-                  <p className="text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider">{card.label}</p>
-                  <p className="mt-2 text-3xl font-bold text-slate-800 dark:text-white">
+              <div className="relative flex items-start justify-between gap-1">
+                <div className="min-w-0">
+                  <p className="text-[10px] sm:text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider truncate">{card.label}</p>
+                  <p className="mt-1 sm:mt-2 text-2xl sm:text-3xl font-bold text-slate-800 dark:text-white">
                     <AnimatedNumber target={card.value} />
-                    {card.suffix && <span className="text-lg ml-0.5">{card.suffix}</span>}
+                    {card.suffix && <span className="text-sm sm:text-lg ml-0.5">{card.suffix}</span>}
                   </p>
-                  <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">{card.sub}</p>
+                  <p className="mt-0.5 sm:mt-1 text-[10px] sm:text-xs text-slate-400 dark:text-slate-500 truncate">{card.sub}</p>
                 </div>
-                <div className={`h-10 w-10 rounded-lg ${card.iconBg} border flex items-center justify-center transition-all group-hover:scale-110`}>
-                  <card.icon className={`h-5 w-5 ${card.iconColor}`} />
+                <div className={`h-8 w-8 sm:h-10 sm:w-10 rounded-lg ${card.iconBg} border flex items-center justify-center shrink-0 transition-all group-hover:scale-110`}>
+                  <card.icon className={`h-4 w-4 sm:h-5 sm:w-5 ${card.iconColor}`} />
                 </div>
               </div>
             </div>
@@ -210,9 +210,9 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid gap-3 sm:gap-4 lg:grid-cols-3">
         <div className="glass-card rounded-xl overflow-hidden lg:col-span-1" data-testid="section-recent-tasks">
-          <div className="glass-dialog-header px-5 py-3 flex items-center justify-between">
+          <div className="glass-dialog-header px-3 sm:px-5 py-3 flex items-center justify-between gap-1">
             <div className="flex items-center gap-2">
               <KanbanSquare className="h-4 w-4 text-blue-400" />
               <span className="text-sm font-medium text-blue-700 dark:text-blue-200">待办任务</span>
@@ -224,7 +224,7 @@ export default function DashboardPage() {
             </Link>
           </div>
           <ScrollArea className="h-[280px]">
-            <div className="p-3 space-y-2">
+            <div className="p-2 sm:p-3 space-y-1 sm:space-y-2">
               {(!stats?.recentTasks || stats.recentTasks.length === 0) ? (
                 <div className="flex flex-col items-center justify-center py-10 text-center">
                   <CheckCircle2 className="h-10 w-10 text-emerald-500/20 mb-3" />
@@ -256,7 +256,7 @@ export default function DashboardPage() {
         </div>
 
         <div className="glass-card rounded-xl overflow-hidden lg:col-span-1" data-testid="section-recent-files">
-          <div className="glass-dialog-header px-5 py-3 flex items-center justify-between">
+          <div className="glass-dialog-header px-3 sm:px-5 py-3 flex items-center justify-between gap-1">
             <div className="flex items-center gap-2">
               <FileText className="h-4 w-4 text-blue-400" />
               <span className="text-sm font-medium text-blue-700 dark:text-blue-200">最近文档</span>
@@ -268,7 +268,7 @@ export default function DashboardPage() {
             </Link>
           </div>
           <ScrollArea className="h-[280px]">
-            <div className="p-3 space-y-2">
+            <div className="p-2 sm:p-3 space-y-1 sm:space-y-2">
               {(!stats?.recentFiles || stats.recentFiles.length === 0) ? (
                 <div className="flex flex-col items-center justify-center py-10 text-center">
                   <FolderTree className="h-10 w-10 text-blue-500/20 mb-3" />
@@ -297,7 +297,7 @@ export default function DashboardPage() {
         </div>
 
         <div className="glass-card rounded-xl overflow-hidden lg:col-span-1" data-testid="section-recent-intel">
-          <div className="glass-dialog-header px-5 py-3 flex items-center justify-between">
+          <div className="glass-dialog-header px-3 sm:px-5 py-3 flex items-center justify-between gap-1">
             <div className="flex items-center gap-2">
               <Radar className="h-4 w-4 text-blue-400" />
               <span className="text-sm font-medium text-blue-700 dark:text-blue-200">最新情报</span>
@@ -309,7 +309,7 @@ export default function DashboardPage() {
             </Link>
           </div>
           <ScrollArea className="h-[280px]">
-            <div className="p-3 space-y-2">
+            <div className="p-2 sm:p-3 space-y-1 sm:space-y-2">
               {(!stats?.recentIntel || stats.recentIntel.length === 0) ? (
                 <div className="flex flex-col items-center justify-center py-10 text-center">
                   <Radar className="h-10 w-10 text-purple-500/20 mb-3" />
@@ -336,15 +336,15 @@ export default function DashboardPage() {
 
       {stats?.recentActivity && stats.recentActivity.length > 0 && (
         <div className="glass-card rounded-xl overflow-hidden" data-testid="section-activity">
-          <div className="glass-dialog-header px-5 py-3 flex items-center gap-2">
+          <div className="glass-dialog-header px-3 sm:px-5 py-3 flex items-center gap-2">
             <Clock className="h-4 w-4 text-blue-400" />
             <span className="text-sm font-medium text-blue-700 dark:text-blue-200">今日动态</span>
             <Badge variant="outline" className="ml-2 text-[10px] h-5 bg-blue-500/10 text-blue-400 border-blue-500/20">
               {stats.recentActivity.length} 条记录
             </Badge>
           </div>
-          <div className="p-4">
-            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="p-2 sm:p-4">
+            <div className="grid gap-1.5 sm:gap-2 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
               {stats.recentActivity.map((activity) => {
                 const Icon = activityIconMap[activity.action] || Activity;
                 const modColor = activityModuleColors[activity.module] || "text-slate-500 dark:text-slate-400";

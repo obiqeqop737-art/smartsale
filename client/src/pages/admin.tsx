@@ -207,53 +207,53 @@ export default function AdminPage() {
     <div className="p-4 md:p-6 space-y-6" data-testid="page-admin">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-3">
-            <div className="h-9 w-9 rounded-lg bg-red-500/15 border border-red-500/20 flex items-center justify-center">
-              <Shield className="h-5 w-5 text-red-400" />
+          <h1 className="text-xl md:text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-3">
+            <div className="h-8 w-8 md:h-9 md:w-9 rounded-lg bg-red-500/15 border border-red-500/20 flex items-center justify-center shrink-0">
+              <Shield className="h-4 w-4 md:h-5 md:w-5 text-red-400" />
             </div>
             超级管理台
           </h1>
-          <p className="mt-1 text-sm text-slate-400 dark:text-slate-500">用户管理 · 部门管理 · 资产交接中心</p>
+          <p className="mt-1 text-xs md:text-sm text-slate-400 dark:text-slate-500">用户管理 · 部门管理 · 资产交接中心</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="glass-card p-4 rounded-xl border border-blue-500/10">
-          <div className="flex items-center gap-3 mb-2">
-            <Users className="h-5 w-5 text-blue-400" />
-            <span className="text-sm font-medium text-slate-600 dark:text-slate-300">总用户数</span>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6">
+        <div className="glass-card p-3 md:p-4 rounded-xl border border-blue-500/10">
+          <div className="flex items-center gap-2 md:gap-3 mb-1 md:mb-2">
+            <Users className="h-4 w-4 md:h-5 md:w-5 text-blue-400 shrink-0" />
+            <span className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-300">总用户数</span>
           </div>
-          <p className="text-2xl font-bold text-blue-500">{allUsers.length}</p>
+          <p className="text-xl md:text-2xl font-bold text-blue-500">{allUsers.length}</p>
         </div>
-        <div className="glass-card p-4 rounded-xl border border-purple-500/10">
-          <div className="flex items-center gap-3 mb-2">
-            <Building2 className="h-5 w-5 text-purple-400" />
-            <span className="text-sm font-medium text-slate-600 dark:text-slate-300">部门数</span>
+        <div className="glass-card p-3 md:p-4 rounded-xl border border-purple-500/10">
+          <div className="flex items-center gap-2 md:gap-3 mb-1 md:mb-2">
+            <Building2 className="h-4 w-4 md:h-5 md:w-5 text-purple-400 shrink-0" />
+            <span className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-300">部门数</span>
           </div>
-          <p className="text-2xl font-bold text-purple-500">{departments.length}</p>
+          <p className="text-xl md:text-2xl font-bold text-purple-500">{departments.length}</p>
         </div>
-        <div className="glass-card p-4 rounded-xl border border-red-500/10">
-          <div className="flex items-center gap-3 mb-2">
-            <ArrowRightLeft className="h-5 w-5 text-red-400" />
-            <span className="text-sm font-medium text-slate-600 dark:text-slate-300">交接记录</span>
+        <div className="glass-card p-3 md:p-4 rounded-xl border border-red-500/10">
+          <div className="flex items-center gap-2 md:gap-3 mb-1 md:mb-2">
+            <ArrowRightLeft className="h-4 w-4 md:h-5 md:w-5 text-red-400 shrink-0" />
+            <span className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-300">交接记录</span>
           </div>
-          <p className="text-2xl font-bold text-red-500">{handoverLogs.length}</p>
+          <p className="text-xl md:text-2xl font-bold text-red-500">{handoverLogs.length}</p>
         </div>
-        <div className="glass-card p-4 rounded-xl border border-emerald-500/10">
-          <div className="flex items-center gap-3 mb-2">
-            <CheckCircle2 className="h-5 w-5 text-emerald-400" />
-            <span className="text-sm font-medium text-slate-600 dark:text-slate-300">系统状态</span>
+        <div className="glass-card p-3 md:p-4 rounded-xl border border-emerald-500/10">
+          <div className="flex items-center gap-2 md:gap-3 mb-1 md:mb-2">
+            <CheckCircle2 className="h-4 w-4 md:h-5 md:w-5 text-emerald-400 shrink-0" />
+            <span className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-300">系统状态</span>
           </div>
-          <p className="text-2xl font-bold text-emerald-500">运行正常</p>
+          <p className="text-xl md:text-2xl font-bold text-emerald-500">运行正常</p>
         </div>
       </div>
 
-      <div className="flex gap-2 border-b border-blue-500/10 pb-1">
+      <div className="flex gap-2 border-b border-blue-500/10 pb-1 overflow-x-auto scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
         {tabs.map(tab => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-t-lg text-sm font-medium transition-all ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-t-lg text-sm font-medium transition-all whitespace-nowrap shrink-0 ${
               activeTab === tab.key
                 ? "bg-blue-500/10 text-blue-500 dark:text-blue-400 border border-blue-500/20 border-b-transparent"
                 : "text-slate-500 dark:text-slate-400 hover:text-blue-400 hover:bg-blue-500/5"
@@ -284,7 +284,7 @@ export default function AdminPage() {
               {allUsers.map((user) => (
                 <div
                   key={user.id}
-                  className="flex items-center gap-4 px-5 py-4 hover:bg-blue-500/5 transition-colors"
+                  className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4 px-4 md:px-5 py-3 md:py-4 hover:bg-blue-500/5 transition-colors"
                   data-testid={`user-row-${user.id}`}
                 >
                   <Avatar className="h-10 w-10 border border-blue-500/20">
@@ -309,7 +309,7 @@ export default function AdminPage() {
                       {user.email || user.id} · {getDeptName(user.departmentId)}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap md:flex-nowrap">
                     <Select
                       value={user.departmentId?.toString() || "none"}
                       onValueChange={(v) => {
@@ -319,7 +319,7 @@ export default function AdminPage() {
                         });
                       }}
                     >
-                      <SelectTrigger className="glass-input h-8 w-28 text-xs" data-testid={`select-dept-${user.id}`}>
+                      <SelectTrigger className="glass-input h-8 w-full md:w-28 text-xs" data-testid={`select-dept-${user.id}`}>
                         <SelectValue placeholder="部门" />
                       </SelectTrigger>
                       <SelectContent className="glass-dialog border-blue-500/20">
@@ -335,7 +335,7 @@ export default function AdminPage() {
                         updateUserMutation.mutate({ id: user.id, userType: v });
                       }}
                     >
-                      <SelectTrigger className="glass-input h-8 w-24 text-xs" data-testid={`select-type-${user.id}`}>
+                      <SelectTrigger className="glass-input h-8 w-full md:w-24 text-xs" data-testid={`select-type-${user.id}`}>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="glass-dialog border-blue-500/20">
@@ -661,7 +661,7 @@ export default function AdminPage() {
       {drawerOpen && (
         <div className="fixed inset-0 z-[80] flex justify-end" data-testid="handover-drawer">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setDrawerOpen(false)} />
-          <div className="relative w-full max-w-lg glass-dialog border-l border-blue-500/15 flex flex-col animate-in slide-in-from-right duration-300">
+          <div className="relative w-full max-w-lg glass-dialog border-l border-blue-500/15 flex flex-col animate-in slide-in-from-right duration-300 max-h-[100dvh]">
             <div className="glass-dialog-header px-6 py-4 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-3">
                 <div className="h-8 w-8 rounded-lg bg-red-500/15 border border-red-500/20 flex items-center justify-center">

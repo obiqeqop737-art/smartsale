@@ -50,7 +50,9 @@ import {
   MessageCircle,
   Send,
   Crown,
+  ChevronDown,
 } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import type { Task, TaskComment } from "@shared/schema";
 
 const columns = [
@@ -84,6 +86,8 @@ export default function TasksPage() {
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
   const [commentTaskId, setCommentTaskId] = useState<number | null>(null);
   const [commentText, setCommentText] = useState("");
+  const [collapsedColumns, setCollapsedColumns] = useState<Record<string, boolean>>({});
+  const isMobile = useIsMobile();
 
   const isDeptHead = user?.userType === "department_head";
 
@@ -391,14 +395,15 @@ export default function TasksPage() {
           ))}
         </div>
       ) : (
-        <div className="flex flex-1 gap-4 overflow-x-auto pb-4 md:grid md:grid-cols-3 md:overflow-visible">
+        <div className="flex flex-1 flex-col gap-3 overflow-y-auto pb-4 md:grid md:grid-cols-3 md:gap-4 md:overflow-visible">
           {columns.map((col) => {
             const colTasks = getTasksByStatus(col.key);
             const isDropTarget = dragOverColumn === col.key;
+            const isCollapsed = isMobile && collapsedColumns[col.key];
             return (
               <div
                 key={col.key}
-                className={`flex flex-col rounded-xl p-3 transition-all duration-300 min-w-[260px] md:min-w-0 ${
+                className={`flex flex-col rounded-xl p-3 transition-all duration-300 ${
                   isDropTarget ? "drop-zone-active" : "glass-card"
                 }`}
                 onDragOver={(e) => handleDragOver(e, col.key)}
@@ -406,15 +411,27 @@ export default function TasksPage() {
                 onDrop={(e) => handleDrop(e, col.key)}
                 data-testid={`column-${col.key}`}
               >
-                <div className="mb-3 flex items-center justify-between gap-2 px-1">
+                <button
+                  className="mb-3 flex items-center justify-between gap-2 px-1 w-full md:pointer-events-none"
+                  onClick={() => {
+                    if (isMobile) {
+                      setCollapsedColumns(prev => ({ ...prev, [col.key]: !prev[col.key] }));
+                    }
+                  }}
+                  data-testid={`button-toggle-column-${col.key}`}
+                >
                   <div className="flex items-center gap-2">
                     <div className={`h-2 w-2 rounded-full ${col.key === "todo" ? "bg-slate-400" : col.key === "in_progress" ? "bg-blue-400 animate-glow-pulse" : "bg-emerald-400"}`} />
                     <span className={`text-sm font-semibold ${col.color}`}>{col.label}</span>
                   </div>
-                  <span className="rounded-full bg-blue-500/10 border border-blue-500/15 px-2 py-0.5 text-[10px] text-blue-500/70 dark:text-blue-300/70">
-                    {colTasks.length}
-                  </span>
-                </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="rounded-full bg-blue-500/10 border border-blue-500/15 px-2 py-0.5 text-[10px] text-blue-500/70 dark:text-blue-300/70">
+                      {colTasks.length}
+                    </span>
+                    <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform md:hidden ${isCollapsed ? "-rotate-90" : ""}`} />
+                  </div>
+                </button>
+                {!isCollapsed && (
                 <ScrollArea className="flex-1">
                   <div className="space-y-2 pr-1">
                     {colTasks.map((task) => {
@@ -424,15 +441,15 @@ export default function TasksPage() {
                       return (
                         <div
                           key={task.id}
-                          draggable={viewMode === "my"}
-                          onDragStart={(e) => viewMode === "my" && handleDragStart(e, task.id)}
-                          className={`glass-card glass-card-hover rounded-lg p-3 transition-all duration-200 group ${
-                            viewMode === "my" ? "cursor-grab active:cursor-grabbing" : ""
+                          draggable={viewMode === "my" && !isMobile}
+                          onDragStart={(e) => viewMode === "my" && !isMobile && handleDragStart(e, task.id)}
+                          className={`glass-card glass-card-hover rounded-lg p-2.5 md:p-3 transition-all duration-200 group ${
+                            viewMode === "my" && !isMobile ? "cursor-grab active:cursor-grabbing" : ""
                           } ${draggingId === task.id ? "opacity-40" : ""}`}
                           data-testid={`task-card-${task.id}`}
                         >
                           {viewMode === "team" && (
-                            <div className="flex items-center gap-1.5 mb-2">
+                            <div className="flex items-center gap-1.5 mb-1.5 md:mb-2">
                               <Avatar className="h-4 w-4">
                                 <AvatarImage src={teamUsers[task.userId]?.profileImageUrl || ""} />
                                 <AvatarFallback className="bg-blue-500/10 text-blue-400 text-[8px]">
@@ -442,17 +459,17 @@ export default function TasksPage() {
                               <span className="text-[10px] text-blue-400 font-medium">{getTaskOwnerName(task.userId)}</span>
                             </div>
                           )}
-                          <div className="mb-2 flex items-start justify-between gap-2">
-                            {viewMode === "my" && <GripVertical className="mt-0.5 h-3 w-3 shrink-0 text-slate-700 group-hover:text-blue-400/40" />}
-                            <h4 className="flex-1 text-sm font-medium leading-snug text-slate-800 dark:text-white">{task.title}</h4>
+                          <div className="mb-1.5 md:mb-2 flex items-start justify-between gap-2">
+                            {viewMode === "my" && !isMobile && <GripVertical className="mt-0.5 h-3 w-3 shrink-0 text-slate-700 group-hover:text-blue-400/40" />}
+                            <h4 className="flex-1 text-xs md:text-sm font-medium leading-snug text-slate-800 dark:text-white">{task.title}</h4>
                             <div className={`shrink-0 rounded-full border px-1.5 py-0.5 text-[10px] ${prio.bgColor} ${prio.color}`}>
                               {prio.label}
                             </div>
                           </div>
                           {task.description && (
-                            <p className="mb-2 text-xs leading-relaxed text-slate-400 dark:text-slate-500 line-clamp-2">{task.description}</p>
+                            <p className="mb-1.5 md:mb-2 text-[11px] md:text-xs leading-relaxed text-slate-400 dark:text-slate-500 line-clamp-2">{task.description}</p>
                           )}
-                          <div className="flex flex-wrap items-center gap-2">
+                          <div className="flex flex-wrap items-center gap-1.5 md:gap-2">
                             {task.dueDate && (
                               <span className={`flex items-center gap-1 text-[10px] ${
                                 overdue ? "text-red-400" : dueSoon ? "text-yellow-400" : "text-slate-600"
@@ -465,20 +482,20 @@ export default function TasksPage() {
                               <span className="text-[10px] text-slate-400 dark:text-slate-600">指派: {task.assignedBy}</span>
                             )}
                           </div>
-                          <div className="mt-2 flex items-center justify-between">
+                          <div className="mt-1.5 md:mt-2 flex items-center justify-between">
                             <div className="flex gap-1">
                               {viewMode === "my" && (
                                 <>
                                   <button
                                     onClick={() => openEditDialog(task)}
-                                    className="p-1 text-slate-500 hover:text-blue-400 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                                    className={`p-1 text-slate-500 hover:text-blue-400 rounded transition-opacity ${isMobile ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
                                     data-testid={`button-edit-task-${task.id}`}
                                   >
                                     <Edit3 className="h-3 w-3" />
                                   </button>
                                   <button
                                     onClick={() => setDeleteTaskId(task.id)}
-                                    className="p-1 text-slate-500 hover:text-red-400 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                                    className={`p-1 text-slate-500 hover:text-red-400 rounded transition-opacity ${isMobile ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
                                     data-testid={`button-delete-task-${task.id}`}
                                   >
                                     <Trash2 className="h-3 w-3" />
@@ -528,6 +545,7 @@ export default function TasksPage() {
                     )}
                   </div>
                 </ScrollArea>
+                )}
               </div>
             );
           })}
@@ -535,7 +553,7 @@ export default function TasksPage() {
       )}
 
       <Dialog open={dialogOpen || editingTask !== null} onOpenChange={(open) => { if (!open) { setDialogOpen(false); setEditingTask(null); } }}>
-        <DialogContent className="glass-dialog border-blue-500/20 sm:max-w-md">
+        <DialogContent className="glass-dialog border-blue-500/20 sm:max-w-md max-h-[90vh] w-[95vw] sm:w-full overflow-y-auto">
           <DialogHeader className="glass-dialog-header -mx-6 -mt-6 px-6 py-4 rounded-t-lg">
             <DialogTitle className="flex items-center gap-2 text-blue-700 dark:text-blue-200">
               <KanbanSquare className="h-4 w-4 text-blue-400" />
@@ -621,7 +639,7 @@ export default function TasksPage() {
       </Dialog>
 
       <Dialog open={commentTaskId !== null} onOpenChange={(open) => { if (!open) setCommentTaskId(null); }}>
-        <DialogContent className="glass-dialog border-blue-500/20 sm:max-w-md">
+        <DialogContent className="glass-dialog border-blue-500/20 sm:max-w-md max-h-[90vh] w-[95vw] sm:w-full overflow-y-auto">
           <DialogHeader className="glass-dialog-header -mx-6 -mt-6 px-6 py-4 rounded-t-lg">
             <DialogTitle className="flex items-center gap-2 text-blue-700 dark:text-blue-200">
               <MessageCircle className="h-4 w-4 text-amber-400" />
@@ -698,7 +716,7 @@ export default function TasksPage() {
       </Dialog>
 
       <AlertDialog open={deleteTaskId !== null} onOpenChange={(open) => !open && setDeleteTaskId(null)}>
-        <AlertDialogContent className="glass-dialog border-blue-500/20">
+        <AlertDialogContent className="glass-dialog border-blue-500/20 w-[95vw] sm:w-full">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-blue-700 dark:text-blue-200">确认删除任务</AlertDialogTitle>
             <AlertDialogDescription className="text-slate-500 dark:text-slate-400">此操作将永久删除该任务，且无法恢复。确定要继续吗？</AlertDialogDescription>

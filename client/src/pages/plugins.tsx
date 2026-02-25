@@ -160,15 +160,15 @@ export default function PluginsPage() {
 
   return (
     <div className="p-4 md:p-6 space-y-6" data-testid="page-plugins">
-      <div className="flex items-center justify-between">
+      <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-3">
-            <div className="h-9 w-9 rounded-lg bg-purple-500/15 border border-purple-500/20 flex items-center justify-center">
-              <Puzzle className="h-5 w-5 text-purple-400" />
+          <h1 className="text-xl md:text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-3">
+            <div className="h-8 w-8 md:h-9 md:w-9 rounded-lg bg-purple-500/15 border border-purple-500/20 flex items-center justify-center shrink-0">
+              <Puzzle className="h-4 w-4 md:h-5 md:w-5 text-purple-400" />
             </div>
             插件中心
           </h1>
-          <p className="mt-1 text-sm text-slate-400 dark:text-slate-500">接入企业生态插件，打通数据孤岛</p>
+          <p className="mt-1 text-xs md:text-sm text-slate-400 dark:text-slate-500">接入企业生态插件，打通数据孤岛</p>
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="outline" className="text-[10px] h-5 bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
@@ -180,7 +180,7 @@ export default function PluginsPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div className="grid gap-3 md:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {pluginCards.map((plugin) => {
           const Icon = plugin.icon;
           const status = getPluginStatus(plugin);
@@ -190,7 +190,7 @@ export default function PluginsPage() {
           return (
             <div
               key={plugin.id}
-              className={`glass-card glass-card-hover rounded-xl p-5 transition-all duration-300 group relative overflow-hidden cursor-pointer border ${plugin.borderColor} shadow-lg ${plugin.glowColor} ${isComingSoon ? "opacity-60" : ""}`}
+              className={`glass-card glass-card-hover rounded-xl p-4 md:p-5 transition-all duration-300 group relative overflow-hidden cursor-pointer border ${plugin.borderColor} shadow-lg ${plugin.glowColor} ${isComingSoon ? "opacity-60" : ""}`}
               onClick={() => handleConnect(plugin)}
               data-testid={`plugin-card-${plugin.id}`}
             >
@@ -257,9 +257,9 @@ export default function PluginsPage() {
       </div>
 
       {confirmDialog && (
-        <div className="fixed inset-0 z-[80] flex items-center justify-center" data-testid="dialog-connect">
+        <div className="fixed inset-0 z-[80] flex items-center justify-center p-4" data-testid="dialog-connect">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setConfirmDialog(null)} />
-          <div className="relative glass-dialog rounded-2xl border border-blue-500/15 w-full max-w-md mx-4 overflow-hidden animate-in zoom-in-95 duration-200">
+          <div className="relative glass-dialog rounded-2xl border border-blue-500/15 w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="glass-dialog-header px-6 py-4 flex items-center justify-between">
               <h3 className="text-base font-bold text-slate-800 dark:text-white">授权确认</h3>
               <Button
@@ -311,9 +311,9 @@ export default function PluginsPage() {
       )}
 
       {disconnectDialog && (
-        <div className="fixed inset-0 z-[80] flex items-center justify-center" data-testid="dialog-disconnect">
+        <div className="fixed inset-0 z-[80] flex items-center justify-center p-4" data-testid="dialog-disconnect">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setDisconnectDialog(null)} />
-          <div className="relative glass-dialog rounded-2xl border border-blue-500/15 w-full max-w-md mx-4 overflow-hidden animate-in zoom-in-95 duration-200">
+          <div className="relative glass-dialog rounded-2xl border border-blue-500/15 w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="glass-dialog-header px-6 py-4 flex items-center justify-between">
               <h3 className="text-base font-bold text-slate-800 dark:text-white">管理插件</h3>
               <Button

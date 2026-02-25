@@ -473,11 +473,12 @@ export default function KnowledgePage() {
     <div className="flex h-full" data-testid="page-knowledge">
       {showPanel && (
         <div
-          className="fixed inset-0 z-20 bg-black/40 backdrop-blur-sm md:hidden"
+          className="fixed inset-0 z-20 bg-black/40 backdrop-blur-sm md:hidden animate-in fade-in duration-200"
           onClick={() => setShowPanel(false)}
         />
       )}
-      <div className={`${showPanel ? "flex" : "hidden md:flex"} w-64 md:w-72 flex-col gap-3 p-3 border-r border-blue-500/10 max-md:fixed max-md:inset-y-0 max-md:left-0 max-md:z-30 max-md:w-64 max-md:bg-white max-md:dark:bg-slate-950 max-md:shadow-xl`}>
+      <div className={`${showPanel ? "flex" : "hidden md:flex"} w-64 md:w-72 flex-col gap-3 p-3 border-r border-blue-500/10 max-md:fixed max-md:bottom-0 max-md:left-0 max-md:right-0 max-md:z-30 max-md:w-full max-md:h-[75vh] max-md:rounded-t-2xl max-md:bg-white max-md:dark:bg-slate-950 max-md:shadow-2xl max-md:border-t max-md:border-blue-500/15 max-md:animate-in max-md:slide-in-from-bottom max-md:duration-300`}>
+        <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600 mx-auto mb-2 md:hidden" />
         <div className="flex items-center justify-between px-1">
           <span className="text-xs font-semibold text-blue-600/80 dark:text-blue-300/80 uppercase tracking-wider">目录导航</span>
           <div className="flex gap-1">
@@ -603,10 +604,10 @@ export default function KnowledgePage() {
       <div className="flex flex-1 flex-col min-w-0 relative">
         <button
           onClick={() => setShowPanel(!showPanel)}
-          className="absolute top-2 left-2 z-10 flex h-8 w-8 items-center justify-center rounded-lg bg-white/80 dark:bg-slate-900/80 backdrop-blur border border-blue-500/15 text-blue-400/70 hover:text-blue-400 shadow-sm md:hidden"
+          className="absolute top-2 left-2 z-10 flex h-9 w-9 items-center justify-center rounded-lg bg-white/80 dark:bg-slate-900/80 backdrop-blur border border-blue-500/15 text-blue-400/70 hover:text-blue-400 shadow-sm md:hidden"
           data-testid="button-toggle-panel"
         >
-          <PanelLeftOpen className="h-4 w-4" />
+          <Folder className="h-4 w-4" />
         </button>
 
         <div className="flex-1 overflow-auto px-3 md:px-6 py-4">
@@ -707,7 +708,7 @@ export default function KnowledgePage() {
           </div>
         </div>
 
-        <div className="border-t border-blue-500/10 p-3 md:p-4">
+        <div className="border-t border-blue-500/10 p-2 md:p-4 shrink-0 bg-white/80 dark:bg-slate-950/80 backdrop-blur-sm md:bg-transparent md:dark:bg-transparent md:backdrop-blur-none">
           <div className="max-w-3xl mx-auto">
             <div className="relative flex items-end gap-2 rounded-xl glass-card border border-blue-500/15 hover:border-blue-500/30 transition-all duration-300 p-2 focus-within:border-blue-500/40 focus-within:shadow-[0_0_20px_rgba(59,130,246,0.08)]">
               <Textarea
@@ -736,7 +737,7 @@ export default function KnowledgePage() {
                 )}
               </button>
             </div>
-            <p className="text-center text-[10px] text-slate-400/60 dark:text-slate-600/60 mt-2">
+            <p className="text-center text-[10px] text-slate-400/60 dark:text-slate-600/60 mt-2 hidden md:block">
               基于知识库文档的 RAG 智能问答 · 按 Enter 发送
             </p>
           </div>

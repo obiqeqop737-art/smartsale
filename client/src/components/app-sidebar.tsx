@@ -116,7 +116,7 @@ export function AppSidebar({ user, collapsed, onToggle, onNavigate }: AppSidebar
     <aside
       className={`glass-sidebar flex flex-col transition-all duration-300 ${
         collapsed ? "w-16" : "w-60"
-      } shrink-0 relative z-30`}
+      } shrink-0 relative z-30 h-full`}
       data-testid="sidebar"
     >
       <div className="flex items-center gap-3 px-4 py-4">

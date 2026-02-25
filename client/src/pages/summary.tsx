@@ -35,6 +35,7 @@ import {
   ChevronDown,
   ChevronRight,
   Brain,
+  X,
 } from "lucide-react";
 import type { DailySummary } from "@shared/schema";
 
@@ -280,8 +281,175 @@ export default function SummaryPage() {
     };
   })();
 
+  const [mobileHistoryOpen, setMobileHistoryOpen] = useState(false);
+
   return (
     <div className="flex h-full" data-testid="page-summary">
+      {mobileHistoryOpen && (
+        <div
+          className="fixed inset-0 z-20 bg-black/40 backdrop-blur-sm md:hidden animate-in fade-in duration-200"
+          onClick={() => setMobileHistoryOpen(false)}
+        />
+      )}
+      {mobileHistoryOpen && (
+        <div className="fixed bottom-0 left-0 right-0 z-30 w-full h-[70vh] rounded-t-2xl bg-white dark:bg-slate-950 shadow-2xl border-t border-blue-500/15 animate-in slide-in-from-bottom duration-300 flex flex-col md:hidden" data-testid="summary-history-mobile-drawer">
+          <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600 mx-auto mt-2 mb-1" />
+          <div className="px-4 py-2 border-b border-blue-500/10 flex items-center justify-between">
+            <div className="flex bg-slate-100 dark:bg-slate-800/50 rounded-lg p-0.5 border border-slate-200 dark:border-blue-500/10 flex-1 mr-2">
+              <button
+                onClick={() => setViewMode("my")}
+                className={`flex-1 px-2 py-1.5 rounded-md text-xs font-medium transition-all flex items-center justify-center gap-1 ${
+                  viewMode === "my"
+                    ? "bg-white dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 shadow-sm"
+                    : "text-slate-500 dark:text-slate-400"
+                }`}
+                data-testid="button-mobile-view-my"
+              >
+                <Clock className="h-3 w-3" />
+                我的日报
+              </button>
+              <button
+                onClick={() => setViewMode("received")}
+                className={`flex-1 px-2 py-1.5 rounded-md text-xs font-medium transition-all flex items-center justify-center gap-1 ${
+                  viewMode === "received"
+                    ? "bg-white dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 shadow-sm"
+                    : "text-slate-500 dark:text-slate-400"
+                }`}
+                data-testid="button-mobile-view-received"
+              >
+                <Inbox className="h-3 w-3" />
+                收到的
+                {receivedList.length > 0 && (
+                  <span className="ml-0.5 bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded-full px-1.5 text-[10px]">
+                    {receivedList.length}
+                  </span>
+                )}
+              </button>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setMobileHistoryOpen(false)}
+              data-testid="button-close-mobile-history"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          <ScrollArea className="flex-1">
+            {viewMode === "my" ? (
+              <div className="p-2 space-y-1">
+                {historyList.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-10 text-center">
+                    <FileText className="h-8 w-8 text-blue-500/15 mb-2" />
+                    <p className="text-xs text-slate-400 dark:text-slate-600">暂无历史日报</p>
+                  </div>
+                ) : (
+                  historyList.map((item) => (
+                    <div
+                      key={item.id}
+                      className={`group w-full text-left rounded-lg p-3 transition-all cursor-pointer ${
+                        selectedHistoryId === item.id
+                          ? "bg-blue-500/10 border border-blue-500/20"
+                          : "hover:bg-blue-500/5 border border-transparent"
+                      }`}
+                      onClick={() => { handleSelectHistory(item); setMobileHistoryOpen(false); }}
+                      data-testid={`mobile-history-item-${item.id}`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-3 w-3 text-blue-400 shrink-0" />
+                        <span className="text-xs font-medium text-slate-600 dark:text-slate-300">{formatHistoryDate(item.date)}</span>
+                        <span className="text-[10px] text-slate-400 dark:text-slate-600">{formatHistoryDay(item.date)}</span>
+                        {item.status === "sent" && (
+                          <Badge className="ml-auto text-[9px] h-4 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-300 dark:border-emerald-500/20 px-1">
+                            已发送
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="mt-1.5 text-[10px] text-slate-400 dark:text-slate-500 line-clamp-2 pl-5">
+                        {item.content.slice(0, 80)}...
+                      </p>
+                    </div>
+                  ))
+                )}
+              </div>
+            ) : (
+              <div className="p-2 space-y-0.5">
+                {dateGroups.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-10 text-center">
+                    <Inbox className="h-8 w-8 text-blue-500/15 mb-2" />
+                    <p className="text-xs text-slate-400 dark:text-slate-600">暂无收到的日报</p>
+                  </div>
+                ) : (
+                  dateGroups.map((group) => {
+                    const isExpanded = expandedDates.has(group.date);
+                    return (
+                      <div key={group.date}>
+                        <button
+                          onClick={() => toggleDateExpand(group.date)}
+                          className="w-full flex items-center gap-2 px-2.5 py-2 rounded-md hover:bg-amber-500/5 transition-all"
+                        >
+                          {isExpanded ? (
+                            <ChevronDown className="h-3 w-3 text-amber-500 dark:text-amber-400 shrink-0" />
+                          ) : (
+                            <ChevronRight className="h-3 w-3 text-slate-400 shrink-0" />
+                          )}
+                          <Calendar className="h-3 w-3 text-amber-500 dark:text-amber-400 shrink-0" />
+                          <span className="text-xs font-medium text-slate-700 dark:text-slate-300">{formatHistoryDate(group.date)}</span>
+                          <span className="ml-auto text-[10px] bg-amber-500/15 text-amber-600 dark:text-amber-400 rounded-full px-1.5">
+                            {group.summaries.length}人
+                          </span>
+                        </button>
+                        {isExpanded && (
+                          <div className="ml-3 pl-2.5 border-l border-amber-500/15 space-y-0.5 pb-1">
+                            <button
+                              onClick={() => { handleGenerateTeamSummary(group.date); setMobileHistoryOpen(false); }}
+                              disabled={isGeneratingTeam && teamSummaryDate === group.date}
+                              className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-md text-left transition-all ${
+                                teamSummaryDate === group.date
+                                  ? "bg-purple-500/10 border border-purple-500/20"
+                                  : "hover:bg-purple-500/5 border border-transparent"
+                              }`}
+                            >
+                              {isGeneratingTeam && teamSummaryDate === group.date ? (
+                                <Loader2 className="h-3 w-3 text-purple-500 dark:text-purple-400 shrink-0 animate-spin" />
+                              ) : (
+                                <Brain className="h-3 w-3 text-purple-500 dark:text-purple-400 shrink-0" />
+                              )}
+                              <span className="text-[11px] font-medium text-purple-600 dark:text-purple-400">
+                                {isGeneratingTeam && teamSummaryDate === group.date ? "生成中..." : "AI 团队汇总"}
+                              </span>
+                            </button>
+                            {group.summaries.map((item) => (
+                              <button
+                                key={item.id}
+                                onClick={() => { handleSelectReceived(item); setMobileHistoryOpen(false); }}
+                                className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-md text-left transition-all ${
+                                  selectedReceivedId === item.id
+                                    ? "bg-amber-500/10 border border-amber-500/20"
+                                    : "hover:bg-amber-500/5 border border-transparent"
+                                }`}
+                              >
+                                <Avatar className="h-4 w-4 shrink-0">
+                                  <AvatarImage src={item.profileImageUrl || ""} />
+                                  <AvatarFallback className="bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[8px]">
+                                    {(item.userName || "?")[0]}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <span className="text-[11px] font-medium text-slate-700 dark:text-slate-300 truncate">{item.userName || "未知用户"}</span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            )}
+          </ScrollArea>
+        </div>
+      )}
+
       {showHistory && (
         <div className="w-64 shrink-0 border-r border-blue-500/10 flex-col bg-slate-50/50 dark:bg-slate-950/30 hidden md:flex" data-testid="summary-history-sidebar">
           <div className="px-4 py-3 border-b border-blue-500/10">
@@ -460,6 +628,22 @@ export default function SummaryPage() {
             </h1>
             <p className="mt-1 text-sm text-slate-400 dark:text-slate-500">一键生成结构化工作日报，发送给领导审阅</p>
           </div>
+          <div className="flex items-center gap-2 md:hidden">
+            <Button
+              variant="outline"
+              onClick={() => setMobileHistoryOpen(true)}
+              className="text-xs"
+              data-testid="button-mobile-history-toggle"
+            >
+              <Clock className="h-3.5 w-3.5 mr-1.5" />
+              历史记录
+              {(historyList.length + receivedList.length) > 0 && (
+                <span className="ml-1.5 bg-blue-500/15 text-blue-600 dark:text-blue-400 rounded-full px-1.5 text-[10px]">
+                  {historyList.length + receivedList.length}
+                </span>
+              )}
+            </Button>
+          </div>
           {viewMode === "my" && (
             <Button
               onClick={() => {
@@ -553,7 +737,7 @@ export default function SummaryPage() {
             )}
           </div>
 
-          <div className="flex-1 p-6 min-h-0">
+          <div className="flex-1 p-3 md:p-6 min-h-0">
             {!summaryContent && !generateMutation.isPending && !isGeneratingTeam ? (
               <div className="flex flex-col items-center justify-center h-full text-center">
                 <div className="h-20 w-20 rounded-full bg-blue-500/5 border border-blue-500/15 flex items-center justify-center mb-6">
@@ -589,7 +773,7 @@ export default function SummaryPage() {
               </div>
             ) : (
               <ScrollArea className="h-full">
-                <div className="p-1 prose prose-sm dark:prose-invert max-w-none prose-headings:text-slate-800 dark:prose-headings:text-blue-200 prose-h1:text-xl prose-h1:border-b prose-h1:border-blue-500/20 prose-h1:pb-2 prose-h2:text-base prose-h2:text-blue-600 dark:prose-h2:text-blue-300 prose-h3:text-sm prose-strong:text-slate-700 dark:prose-strong:text-blue-200 prose-li:text-slate-600 dark:prose-li:text-slate-300 prose-p:text-slate-600 dark:prose-p:text-slate-300 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-hr:border-blue-500/15 leading-relaxed" data-testid="text-summary-content">
+                <div className="p-1 prose prose-sm dark:prose-invert max-w-none prose-headings:text-slate-800 dark:prose-headings:text-blue-200 prose-h1:text-xl prose-h1:border-b prose-h1:border-blue-500/20 prose-h1:pb-2 prose-h2:text-base prose-h2:text-blue-600 dark:prose-h2:text-blue-300 prose-h3:text-sm prose-strong:text-slate-700 dark:prose-strong:text-blue-200 prose-li:text-slate-600 dark:prose-li:text-slate-300 prose-p:text-slate-600 dark:prose-p:text-slate-300 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-hr:border-blue-500/15 leading-relaxed md:leading-relaxed max-md:leading-loose max-md:prose-p:leading-loose max-md:prose-li:leading-relaxed" data-testid="text-summary-content">
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>{summaryContent}</ReactMarkdown>
                 </div>
               </ScrollArea>

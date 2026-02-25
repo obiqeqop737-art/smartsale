@@ -456,6 +456,14 @@
     z-index: 999;
   }
 
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
   .hover-elevate:hover:not(.no-default-hover-elevate)::after,
   .active-elevate:active:not(.no-default-active-elevate)::after {
     background-color: var(--elevate-1);
@@ -472,5 +480,65 @@
   .border.active-elevate-2:not(.no-active-interaction-elevate)::after,
   .border.hover-elevate:not(.no-hover-interaction-elevate)::after {
     inset: -1px;
+  }
+}
+
+@media (max-width: 767px) {
+  html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  button, a, input, select, textarea, [role="button"] {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .glass-card {
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .glass-dialog {
+    max-height: calc(100dvh - 2rem);
+    max-width: calc(100vw - 1.5rem);
+    overflow-y: auto;
+  }
+
+  .glass-sidebar {
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+
+  .glass-input {
+    min-height: 44px;
+    font-size: 16px;
+  }
+
+  .glow-btn {
+    min-height: 44px;
+    font-size: 14px;
+  }
+
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
+@supports (padding: env(safe-area-inset-bottom)) {
+  @media (max-width: 767px) {
+    .safe-area-bottom {
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    .safe-area-top {
+      padding-top: env(safe-area-inset-top, 0px);
+    }
   }
 }

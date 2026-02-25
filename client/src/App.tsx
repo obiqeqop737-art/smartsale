@@ -21,7 +21,6 @@ import PluginsPage from "@/pages/plugins";
 import ProfilePage from "@/pages/profile";
 import PluginExpensePage from "@/pages/plugin-expense";
 import PluginCrmPage from "@/pages/plugin-crm";
-import { Menu } from "lucide-react";
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(false);
@@ -63,12 +62,23 @@ function AuthenticatedApp() {
 
   return (
     <div className="flex h-screen w-full overflow-hidden">
-      {isMobile && mobileMenuOpen && (
-        <div className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)}>
-          <div className="h-full w-60" onClick={(e) => e.stopPropagation()}>
+      {isMobile && (
+        <>
+          <div
+            className={`fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm transition-opacity duration-300 ${
+              mobileMenuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+            }`}
+            onClick={() => setMobileMenuOpen(false)}
+          />
+          <div
+            className={`fixed inset-y-0 left-0 z-[70] w-64 transition-transform duration-300 ease-in-out ${
+              mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+            }`}
+            onClick={(e) => e.stopPropagation()}
+          >
             <AppSidebar user={user} collapsed={false} onToggle={() => setMobileMenuOpen(false)} onNavigate={() => setMobileMenuOpen(false)} />
           </div>
-        </div>
+        </>
       )}
       {!isMobile && (
         <AppSidebar user={user} collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} />

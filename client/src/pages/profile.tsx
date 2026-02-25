@@ -98,9 +98,9 @@ export default function ProfilePage() {
     : "";
 
   return (
-    <div className="p-6 max-w-2xl mx-auto space-y-6">
-      <h1 className="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-3">
-        <UserCircle className="h-6 w-6 text-blue-500" />
+    <div className="p-4 md:p-6 max-w-2xl mx-auto space-y-4 md:space-y-6">
+      <h1 className="text-xl md:text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-3">
+        <UserCircle className="h-5 w-5 md:h-6 md:w-6 text-blue-500" />
         个人中心
       </h1>
 
@@ -144,13 +144,13 @@ export default function ProfilePage() {
             />
           </div>
 
-          <div className="grid gap-4">
+          <div className="grid gap-4 w-full">
             <div className="grid gap-2">
               <label className="text-xs text-slate-500 dark:text-slate-400">显示名称</label>
               <Input
                 value={formData.firstName}
                 onChange={e => setFormData({...formData, firstName: e.target.value})}
-                className="glass-input"
+                className="glass-input min-h-[44px]"
                 data-testid="input-display-name"
               />
             </div>
@@ -160,7 +160,7 @@ export default function ProfilePage() {
                 value={formData.departmentId || "none"}
                 onValueChange={v => setFormData({...formData, departmentId: v === "none" ? "" : v})}
               >
-                <SelectTrigger className="glass-input" data-testid="select-department">
+                <SelectTrigger className="glass-input min-h-[44px]" data-testid="select-department">
                   <Building className="h-4 w-4 text-slate-400 mr-2 shrink-0" />
                   <SelectValue placeholder="选择部门" />
                 </SelectTrigger>
@@ -178,7 +178,7 @@ export default function ProfilePage() {
                 value={formData.superiorId || "none"}
                 onValueChange={v => setFormData({...formData, superiorId: v === "none" ? "" : v})}
               >
-                <SelectTrigger className="glass-input" data-testid="select-superior">
+                <SelectTrigger className="glass-input min-h-[44px]" data-testid="select-superior">
                   <SelectValue placeholder="选择上级" />
                 </SelectTrigger>
                 <SelectContent className="glass-dialog">

@@ -113,12 +113,12 @@ export function TopBar({ user, isMobile, onMenuClick }: TopBarProps) {
   };
 
   return (
-    <div className="h-12 border-b border-blue-500/10 bg-white/60 dark:bg-slate-950/40 backdrop-blur-sm flex items-center justify-between px-4 md:px-6 shrink-0" data-testid="top-bar">
-      <div className="flex items-center gap-2 text-sm">
+    <div className="h-11 md:h-12 border-b border-blue-500/10 bg-white/60 dark:bg-slate-950/40 backdrop-blur-sm flex items-center justify-between gap-2 px-3 md:px-6 shrink-0" data-testid="top-bar">
+      <div className="flex items-center gap-2 text-sm min-w-0">
         {isMobile && onMenuClick && (
           <button
             onClick={onMenuClick}
-            className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-blue-500/10 text-blue-500 dark:text-blue-400 shrink-0 -ml-1 mr-1"
+            className="flex h-11 w-11 items-center justify-center rounded-lg hover:bg-blue-500/10 text-blue-500 dark:text-blue-400 shrink-0 -ml-2"
             data-testid="button-mobile-menu"
           >
             <Menu className="h-5 w-5" />
@@ -126,41 +126,43 @@ export function TopBar({ user, isMobile, onMenuClick }: TopBarProps) {
         )}
         <Home className="h-3.5 w-3.5 text-slate-400 dark:text-slate-600 hidden md:block" />
         <ChevronRight className="h-3 w-3 text-slate-300 dark:text-slate-700 hidden md:block" />
-        <span className="text-slate-700 dark:text-slate-300 font-medium text-xs md:text-sm truncate">{currentPage}</span>
+        <span className="text-slate-700 dark:text-slate-300 font-medium text-sm md:text-sm truncate">{currentPage}</span>
       </div>
 
-      <div className="flex items-center gap-1 md:gap-2">
-        <div className={`flex items-center transition-all duration-300 ${searchOpen ? "w-36 md:w-64" : "w-8"}`}>
-          {searchOpen ? (
-            <div className="flex-1 relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
-              <input
-                type="text"
-                placeholder="搜索文档、任务..."
-                autoFocus
-                onBlur={() => setSearchOpen(false)}
-                className="w-full h-8 pl-8 pr-3 rounded-lg text-xs glass-input text-slate-700 dark:text-slate-300 placeholder:text-slate-400 dark:placeholder:text-slate-600"
-                data-testid="input-global-search"
-              />
-            </div>
-          ) : (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setSearchOpen(true)}
-              className="h-8 w-8 p-0 text-slate-500 hover:text-blue-400 hover:bg-blue-500/10"
-              data-testid="button-search-toggle"
-            >
-              <Search className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
+      <div className="flex items-center gap-0.5 md:gap-2 shrink-0">
+        {!isMobile && (
+          <div className={`flex items-center transition-all duration-300 ${searchOpen ? "w-64" : "w-8"}`}>
+            {searchOpen ? (
+              <div className="flex-1 relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
+                <input
+                  type="text"
+                  placeholder="搜索文档、任务..."
+                  autoFocus
+                  onBlur={() => setSearchOpen(false)}
+                  className="w-full h-8 pl-8 pr-3 rounded-lg text-xs glass-input text-slate-700 dark:text-slate-300 placeholder:text-slate-400 dark:placeholder:text-slate-600"
+                  data-testid="input-global-search"
+                />
+              </div>
+            ) : (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setSearchOpen(true)}
+                className="text-slate-500 hover:text-blue-400 hover:bg-blue-500/10"
+                data-testid="button-search-toggle"
+              >
+                <Search className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+        )}
 
         <Button
           variant="ghost"
-          size="sm"
+          size="icon"
           onClick={toggleTheme}
-          className="h-8 w-8 p-0 text-slate-500 hover:text-blue-400 hover:bg-blue-500/10 dark:text-slate-500 dark:hover:text-blue-400"
+          className="text-slate-500 hover:text-blue-400 hover:bg-blue-500/10 dark:text-slate-500 dark:hover:text-blue-400"
           data-testid="button-theme-toggle"
         >
           {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
@@ -170,8 +172,8 @@ export function TopBar({ user, isMobile, onMenuClick }: TopBarProps) {
           <PopoverTrigger asChild>
             <Button
               variant="ghost"
-              size="sm"
-              className="h-8 w-8 p-0 text-slate-500 hover:text-blue-400 hover:bg-blue-500/10 relative"
+              size="icon"
+              className="text-slate-500 hover:text-blue-400 hover:bg-blue-500/10 relative"
               data-testid="button-notifications"
             >
               <Bell className="h-4 w-4" />
@@ -182,7 +184,7 @@ export function TopBar({ user, isMobile, onMenuClick }: TopBarProps) {
               )}
             </Button>
           </PopoverTrigger>
-          <PopoverContent align="end" className="w-80 md:w-96 p-0 glass-dialog border-blue-500/20" data-testid="panel-notifications">
+          <PopoverContent align="end" className="w-[calc(100vw-1.5rem)] md:w-96 max-w-96 p-0 glass-dialog border-blue-500/20" data-testid="panel-notifications">
             <div className="flex items-center justify-between px-4 py-3 border-b border-blue-500/10">
               <h3 className="text-sm font-medium text-slate-700 dark:text-slate-200">消息通知</h3>
               <div className="flex items-center gap-1">
@@ -256,7 +258,7 @@ export function TopBar({ user, isMobile, onMenuClick }: TopBarProps) {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-blue-500/5 transition-colors" data-testid="button-user-menu">
+            <button className="flex items-center gap-2 rounded-lg px-2 py-1.5 min-h-[44px] md:min-h-0 hover:bg-blue-500/5 transition-colors" data-testid="button-user-menu">
               <Avatar className="h-7 w-7 border border-blue-500/20">
                 <AvatarImage src={user.profileImageUrl || ""} />
                 <AvatarFallback className="bg-blue-500/10 text-blue-500 dark:text-blue-400 text-xs">

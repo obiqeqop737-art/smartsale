@@ -236,10 +236,10 @@ export default function IntelligencePage() {
         </div>
       </div>
 
-      <div className="mb-4 flex flex-wrap gap-2">
+      <div className="mb-4 flex gap-2 overflow-x-auto pb-1 scrollbar-hide md:flex-wrap md:overflow-visible md:pb-0">
         <button
           onClick={() => { setActiveCategory(null); setShowFavoritesOnly(false); }}
-          className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs transition-all ${
+          className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs whitespace-nowrap transition-all ${
             !activeCategory && !showFavoritesOnly
               ? "bg-blue-100 border-blue-300 text-blue-700 dark:bg-blue-500/20 dark:border-blue-500/40 dark:text-blue-300"
               : "bg-slate-100 border-slate-200 text-slate-600 hover:text-slate-700 hover:border-slate-300 dark:bg-slate-800/30 dark:border-slate-700/30 dark:text-slate-500 dark:hover:text-slate-300 dark:hover:border-slate-600/40"
@@ -251,7 +251,7 @@ export default function IntelligencePage() {
         </button>
         <button
           onClick={() => { setShowFavoritesOnly(!showFavoritesOnly); setActiveCategory(null); }}
-          className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs transition-all ${
+          className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs whitespace-nowrap transition-all ${
             showFavoritesOnly
               ? "bg-amber-100 border-amber-300 text-amber-700 dark:bg-amber-500/20 dark:border-amber-500/40 dark:text-amber-300"
               : "bg-slate-100 border-slate-200 text-slate-600 hover:text-amber-600 hover:border-amber-300 dark:bg-slate-800/30 dark:border-slate-700/30 dark:text-slate-500 dark:hover:text-amber-300 dark:hover:border-amber-600/40"
@@ -268,7 +268,7 @@ export default function IntelligencePage() {
             <button
               key={key}
               onClick={() => setActiveCategory(isActive ? null : key)}
-              className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs transition-all ${
+              className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs whitespace-nowrap transition-all ${
                 isActive ? cfg.activeBg : `${cfg.bgClass} hover:opacity-80`
               }`}
               data-testid={`filter-${key}`}
@@ -282,9 +282,9 @@ export default function IntelligencePage() {
       </div>
 
       {isLoading ? (
-        <div className="columns-1 gap-4 sm:columns-2 lg:columns-3">
+        <div className="columns-1 gap-3 md:gap-4 sm:columns-2 lg:columns-3">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="mb-4 break-inside-avoid">
+            <div key={i} className="mb-3 md:mb-4 break-inside-avoid">
               <div className="h-48 rounded-xl glass-card animate-pulse" />
             </div>
           ))}
@@ -311,15 +311,15 @@ export default function IntelligencePage() {
           )}
         </div>
       ) : (
-        <div className="columns-1 gap-4 sm:columns-2 lg:columns-3">
+        <div className="columns-1 gap-3 md:gap-4 sm:columns-2 lg:columns-3">
           {filteredPosts.map((post, idx) => {
             const cfg = categoryConfig[post.category] || categoryConfig.industry;
             const Icon = cfg.icon;
             const isFavorite = favorites.includes(post.id);
             return (
-              <div key={post.id} className="mb-4 break-inside-avoid">
+              <div key={post.id} className="mb-3 md:mb-4 break-inside-avoid">
                 <div
-                  className="glass-card glass-card-hover rounded-xl p-5 cursor-pointer transition-all duration-300 relative"
+                  className="glass-card glass-card-hover rounded-xl p-3 md:p-5 cursor-pointer transition-all duration-300 relative"
                   data-testid={`intel-card-${post.id}`}
                   onClick={() => handleCardClick(post)}
                 >
@@ -348,9 +348,9 @@ export default function IntelligencePage() {
                       <span className={cfg.color}>{cfg.label}</span>
                     </div>
                   </div>
-                  <h3 className="mb-2 text-sm font-semibold leading-snug text-slate-800 dark:text-white">{post.title}</h3>
+                  <h3 className="mb-2 text-[13px] md:text-sm font-semibold leading-snug text-slate-800 dark:text-white">{post.title}</h3>
                   <p className="mb-3 text-xs leading-relaxed text-slate-500 dark:text-slate-400 line-clamp-3">{post.summary}</p>
-                  <div className="flex items-start gap-2 rounded-lg bg-blue-500/5 border border-blue-500/10 p-3">
+                  <div className="flex items-start gap-2 rounded-lg bg-blue-500/5 border border-blue-500/10 p-2 md:p-3">
                     <Sparkles className="mt-0.5 h-3 w-3 shrink-0 text-blue-400 animate-glow-pulse" />
                     <p className="text-xs font-medium leading-relaxed text-blue-600 dark:text-blue-300 line-clamp-2">{post.aiInsight}</p>
                   </div>
@@ -379,7 +379,7 @@ export default function IntelligencePage() {
 
       <Dialog open={selectedPost !== null} onOpenChange={(open) => !open && setSelectedPost(null)}>
         {selectedPost && (
-          <DialogContent className="glass-dialog border-blue-500/20 sm:max-w-2xl max-h-[80vh] overflow-auto">
+          <DialogContent className="glass-dialog border-blue-500/20 w-[95vw] h-[90vh] sm:w-auto sm:h-auto sm:max-w-2xl sm:max-h-[80vh] overflow-auto">
             <DialogHeader className="glass-dialog-header -mx-6 -mt-6 px-6 py-4 rounded-t-lg">
               <div className="flex items-center justify-between">
                 <DialogTitle className="text-blue-700 dark:text-blue-200 pr-8">{selectedPost.title}</DialogTitle>
