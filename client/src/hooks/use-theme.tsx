@@ -22,12 +22,22 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const root = document.documentElement;
+    const style = document.createElement("style");
+    style.textContent = "*, *::before, *::after { transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease !important; }";
+    document.head.appendChild(style);
     if (theme === "dark") {
       root.classList.add("dark");
     } else {
       root.classList.remove("dark");
     }
     localStorage.setItem("documind-theme", theme);
+    const timer = setTimeout(() => {
+      document.head.removeChild(style);
+    }, 350);
+    return () => {
+      clearTimeout(timer);
+      if (style.parentNode) document.head.removeChild(style);
+    };
   }, [theme]);
 
   const toggleTheme = () => {
