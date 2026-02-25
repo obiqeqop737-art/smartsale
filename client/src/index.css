@@ -222,6 +222,7 @@
   backdrop-filter: blur(8px);
   border: 1px solid rgba(56, 130, 246, 0.15);
   transition: border-color 0.2s, box-shadow 0.2s;
+  color: hsl(210 20% 88%);
 }
 
 .glass-input {
