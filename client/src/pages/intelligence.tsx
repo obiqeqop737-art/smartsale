@@ -458,7 +458,7 @@ export default function IntelligencePage() {
 
       <Dialog open={!!sharePost} onOpenChange={(open) => { if (!open) setSharePost(null); }}>
         {sharePost && (
-          <DialogContent className="glass-dialog border-blue-500/20 w-[90vw] max-w-[360px] mx-auto" data-testid="dialog-share-intel">
+          <DialogContent className="glass-dialog border-blue-500/20 !w-[90vw] !max-w-[360px] overflow-hidden" data-testid="dialog-share-intel">
             <DialogHeader>
               <DialogTitle className="text-sm font-medium text-blue-700 dark:text-blue-200 flex items-center gap-2">
                 <Share2 className="h-4 w-4" />
@@ -479,8 +479,8 @@ export default function IntelligencePage() {
                 data-testid="input-share-search"
               />
             </div>
-            <ScrollArea className="max-h-[260px] -mx-1">
-              <div className="space-y-1 px-1">
+            <ScrollArea className="max-h-[260px]">
+              <div className="space-y-1">
                 {shareableUsers.length > 0 ? shareableUsers.map(u => {
                   const alreadyShared = sharedTo.has(u.id);
                   return (
@@ -506,7 +506,7 @@ export default function IntelligencePage() {
                         size="sm"
                         disabled={alreadyShared || shareMutation.isPending}
                         onClick={() => shareMutation.mutate({ postId: sharePost.id, targetUserId: u.id })}
-                        className={`h-7 px-2.5 text-[11px] ${
+                        className={`h-7 px-2.5 text-[11px] shrink-0 ${
                           alreadyShared
                             ? "text-emerald-500 dark:text-emerald-400 cursor-default"
                             : "text-blue-500 hover:text-blue-600 hover:bg-blue-500/10"
