@@ -33,7 +33,7 @@ An enterprise document management platform built with Express + React + PostgreS
 - **Admin Panel**: Tab-based (Users/Departments/Handover). User type management (普通用户/部门长), department assignment, asset transfer
 - **Department Management**: Admin CRUD for departments with parent hierarchy
 - **Profile**: Avatar upload (local file), department selection from DB, superior selection
-- **Plugin Hub**: Grid layout with simulated enterprise plugin cards, connect/disconnect interactions
+- **Plugin Hub**: Grid layout with enterprise plugin cards; only "内部报销审批" and "CRM客户管理" are connectable (rest show "敬请期待"); connected plugins auto-appear in sidebar as nav entries; state shared via PluginProvider context + localStorage
 - **Mobile Responsive**: Sidebar overlay, collapsible panels, horizontal scroll kanban
 
 ## User Types & Roles
@@ -60,9 +60,9 @@ An enterprise document management platform built with Express + React + PostgreS
 ## Project Structure
 ```
 client/src/
-  pages/         - Landing, Knowledge, Intelligence, Tasks, Summary, Admin, Plugins, Profile
+  pages/         - Landing, Knowledge, Intelligence, Tasks, Summary, Admin, Plugins, Profile, PluginExpense, PluginCrm
   components/    - AppSidebar, TopBar (avatar dropdown with profile link), UI components
-  hooks/         - useAuth, useTheme
+  hooks/         - useAuth, useTheme, usePlugins (shared plugin connection state via context + localStorage)
 server/
   routes.ts      - All API endpoints (folders, files, tasks, chat, summary, admin, departments, comments, team-tasks)
   storage.ts     - DatabaseStorage with all CRUD + admin operations

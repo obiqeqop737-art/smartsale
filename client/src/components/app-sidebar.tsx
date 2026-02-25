@@ -4,6 +4,7 @@ import { Brain, Radar, KanbanSquare, FileText, LogOut, ChevronLeft, ChevronRight
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { usePlugins } from "@/hooks/use-plugins";
 import type { User } from "@shared/models/auth";
 import type { Task, IntelligencePost } from "@shared/schema";
 
@@ -30,6 +31,7 @@ interface AppSidebarProps {
 
 export function AppSidebar({ user, collapsed, onToggle, onNavigate }: AppSidebarProps) {
   const [location] = useLocation();
+  const { connectedPlugins } = usePlugins();
 
   const { data: tasksData } = useQuery<Task[]>({ queryKey: ["/api/tasks"] });
   const { data: intelData } = useQuery<IntelligencePost[]>({ queryKey: ["/api/intelligence-posts"] });
@@ -40,6 +42,52 @@ export function AppSidebar({ user, collapsed, onToggle, onNavigate }: AppSidebar
   const badges: Record<string, number> = {
     tasks: todoCount,
     intel: intelCount,
+  };
+
+  const renderNavLink = (item: { title: string; url: string; altUrl: string | null; icon: any; desc: string; badgeKey: string | null }, badgeVal: number = 0) => {
+    const isActive = location === item.url || location === item.altUrl;
+    const linkContent = (
+      <Link
+        href={item.url}
+        onClick={() => onNavigate?.()}
+        data-testid={`nav-${item.url === "/" ? "dashboard" : item.url.slice(1).replace(/\//g, "-")}`}
+        className={`flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-200 group ${
+          isActive
+            ? "glow-border-active bg-blue-500/10 text-blue-600 dark:text-blue-300"
+            : "text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-300 hover:bg-blue-500/5 hover:glow-border"
+        }`}
+      >
+        <item.icon className={`h-4 w-4 shrink-0 ${isActive ? "text-blue-500 dark:text-blue-400" : "text-slate-400 dark:text-slate-500 group-hover:text-blue-500 dark:group-hover:text-blue-400"}`} />
+        {!collapsed && (
+          <>
+            <span className="text-sm truncate flex-1">{item.title}</span>
+            {badgeVal > 0 && (
+              <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-blue-500/15 px-1.5 text-[10px] font-medium text-blue-400 border border-blue-500/20">
+                {badgeVal > 99 ? "99+" : badgeVal}
+              </span>
+            )}
+          </>
+        )}
+        {collapsed && badgeVal > 0 && (
+          <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-blue-500" />
+        )}
+      </Link>
+    );
+
+    if (collapsed) {
+      return (
+        <Tooltip key={item.title} delayDuration={0}>
+          <TooltipTrigger asChild>
+            <div className="relative">{linkContent}</div>
+          </TooltipTrigger>
+          <TooltipContent side="right" className="glass-dialog text-blue-200 border-blue-500/20">
+            <p className="font-medium">{item.title}</p>
+            <p className="text-xs text-blue-300/50">{item.desc}</p>
+          </TooltipContent>
+        </Tooltip>
+      );
+    }
+    return <div key={item.title}>{linkContent}</div>;
   };
 
   return (
@@ -61,53 +109,57 @@ export function AppSidebar({ user, collapsed, onToggle, onNavigate }: AppSidebar
         )}
       </div>
 
-      <nav className="mt-2 flex-1 px-2 space-y-1">
+      <nav className="mt-2 flex-1 px-2 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
-          const isActive = location === item.url || location === item.altUrl;
           const badgeVal = item.badgeKey ? badges[item.badgeKey] : 0;
-          const linkContent = (
-            <Link
-              href={item.url}
-              onClick={() => onNavigate?.()}
-              data-testid={`nav-${item.url === "/" ? "dashboard" : item.url.slice(1)}`}
-              className={`flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-200 group ${
-                isActive
-                  ? "glow-border-active bg-blue-500/10 text-blue-600 dark:text-blue-300"
-                  : "text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-300 hover:bg-blue-500/5 hover:glow-border"
-              }`}
-            >
-              <item.icon className={`h-4 w-4 shrink-0 ${isActive ? "text-blue-500 dark:text-blue-400" : "text-slate-400 dark:text-slate-500 group-hover:text-blue-500 dark:group-hover:text-blue-400"}`} />
-              {!collapsed && (
-                <>
-                  <span className="text-sm truncate flex-1">{item.title}</span>
-                  {badgeVal > 0 && (
-                    <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-blue-500/15 px-1.5 text-[10px] font-medium text-blue-400 border border-blue-500/20">
-                      {badgeVal > 99 ? "99+" : badgeVal}
-                    </span>
-                  )}
-                </>
-              )}
-              {collapsed && badgeVal > 0 && (
-                <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-blue-500" />
-              )}
-            </Link>
-          );
-
-          if (collapsed) {
-            return (
-              <Tooltip key={item.title} delayDuration={0}>
-                <TooltipTrigger asChild>
-                  <div className="relative">{linkContent}</div>
-                </TooltipTrigger>
-                <TooltipContent side="right" className="glass-dialog text-blue-200 border-blue-500/20">
-                  <p className="font-medium">{item.title}</p>
-                  <p className="text-xs text-blue-300/50">{item.desc}</p>
-                </TooltipContent>
-              </Tooltip>
-            );
-          }
-          return <div key={item.title}>{linkContent}</div>;
+          return renderNavLink(item, badgeVal);
         })}
+
+        {connectedPlugins.length > 0 && (
+          <>
+            {!collapsed && (
+              <div className="px-3 pt-4 pb-1">
+                <span className="text-[10px] font-medium text-slate-400/60 dark:text-slate-600 uppercase tracking-widest">已接入插件</span>
+              </div>
+            )}
+            {collapsed && <div className="h-px mx-2 my-2 bg-blue-500/10" />}
+            {connectedPlugins.map(plugin => {
+              const isActive = location === plugin.url;
+              const linkContent = (
+                <Link
+                  href={plugin.url}
+                  onClick={() => onNavigate?.()}
+                  data-testid={`nav-plugin-${plugin.id}`}
+                  className={`flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-200 group ${
+                    isActive
+                      ? "glow-border-active bg-blue-500/10 text-blue-600 dark:text-blue-300"
+                      : "text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-300 hover:bg-blue-500/5 hover:glow-border"
+                  }`}
+                >
+                  <plugin.icon className={`h-4 w-4 shrink-0 ${isActive ? "text-blue-500 dark:text-blue-400" : `${plugin.color} group-hover:text-blue-500 dark:group-hover:text-blue-400`}`} />
+                  {!collapsed && (
+                    <span className="text-sm truncate flex-1">{plugin.name}</span>
+                  )}
+                </Link>
+              );
+
+              if (collapsed) {
+                return (
+                  <Tooltip key={plugin.id} delayDuration={0}>
+                    <TooltipTrigger asChild>
+                      <div className="relative">{linkContent}</div>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="glass-dialog text-blue-200 border-blue-500/20">
+                      <p className="font-medium">{plugin.name}</p>
+                      <p className="text-xs text-blue-300/50">已接入插件</p>
+                    </TooltipContent>
+                  </Tooltip>
+                );
+              }
+              return <div key={plugin.id}>{linkContent}</div>;
+            })}
+          </>
+        )}
       </nav>
 
       <div className="px-2 space-y-1 mb-2">
@@ -118,37 +170,7 @@ export function AppSidebar({ user, collapsed, onToggle, onNavigate }: AppSidebar
         )}
         {bottomNavItems.map((item) => {
           if (item.url === "/admin" && user.role !== "admin") return null;
-          const isActive = location === item.url || location === item.altUrl;
-          const navLink = (
-            <Link
-              href={item.url}
-              onClick={() => onNavigate?.()}
-              data-testid={`nav-${item.url.slice(1)}`}
-              className={`flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-200 group ${
-                isActive
-                  ? "glow-border-active bg-blue-500/10 text-blue-600 dark:text-blue-300"
-                  : "text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-300 hover:bg-blue-500/5 hover:glow-border"
-              }`}
-            >
-              <item.icon className={`h-4 w-4 shrink-0 ${isActive ? "text-blue-500 dark:text-blue-400" : "text-slate-400 dark:text-slate-500 group-hover:text-blue-500 dark:group-hover:text-blue-400"}`} />
-              {!collapsed && <span className="text-sm truncate flex-1">{item.title}</span>}
-            </Link>
-          );
-
-          if (collapsed) {
-            return (
-              <Tooltip key={item.title} delayDuration={0}>
-                <TooltipTrigger asChild>
-                  <div className="relative">{navLink}</div>
-                </TooltipTrigger>
-                <TooltipContent side="right" className="glass-dialog text-blue-200 border-blue-500/20">
-                  <p className="font-medium">{item.title}</p>
-                  <p className="text-xs text-blue-300/50">{item.desc}</p>
-                </TooltipContent>
-              </Tooltip>
-            );
-          }
-          return <div key={item.title}>{navLink}</div>;
+          return renderNavLink(item);
         })}
       </div>
 

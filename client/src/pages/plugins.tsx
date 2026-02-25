@@ -5,7 +5,6 @@ import {
   Receipt,
   Factory,
   Users,
-  BarChart3,
   Mail,
   Calendar,
   Shield,
@@ -17,6 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { usePlugins } from "@/hooks/use-plugins";
 
 interface PluginCard {
   id: string;
@@ -45,6 +45,18 @@ const pluginCards: PluginCard[] = [
     category: "财务管理",
   },
   {
+    id: "crm",
+    name: "CRM客户管理",
+    description: "全流程客户关系管理，销售漏斗追踪，内置BI数据看板与客户画像分析",
+    icon: Shield,
+    color: "text-indigo-400",
+    borderColor: "border-indigo-500/20 hover:border-indigo-500/40",
+    bgColor: "bg-indigo-500/10",
+    glowColor: "shadow-indigo-500/10 hover:shadow-indigo-500/20",
+    status: "available",
+    category: "销售管理",
+  },
+  {
     id: "factory",
     name: "工厂排产进度查询",
     description: "实时同步工厂MES排产数据，追踪订单生产进度与交付节点",
@@ -53,7 +65,7 @@ const pluginCards: PluginCard[] = [
     borderColor: "border-blue-500/20 hover:border-blue-500/40",
     bgColor: "bg-blue-500/10",
     glowColor: "shadow-blue-500/10 hover:shadow-blue-500/20",
-    status: "available",
+    status: "coming_soon",
     category: "生产制造",
   },
   {
@@ -65,20 +77,8 @@ const pluginCards: PluginCard[] = [
     borderColor: "border-purple-500/20 hover:border-purple-500/40",
     bgColor: "bg-purple-500/10",
     glowColor: "shadow-purple-500/10 hover:shadow-purple-500/20",
-    status: "connected",
+    status: "coming_soon",
     category: "协同办公",
-  },
-  {
-    id: "bi",
-    name: "BI数据看板",
-    description: "接入企业BI平台，将销售数据、客户画像等关键指标嵌入工作台",
-    icon: BarChart3,
-    color: "text-amber-400",
-    borderColor: "border-amber-500/20 hover:border-amber-500/40",
-    bgColor: "bg-amber-500/10",
-    glowColor: "shadow-amber-500/10 hover:shadow-amber-500/20",
-    status: "available",
-    category: "数据分析",
   },
   {
     id: "email",
@@ -105,18 +105,6 @@ const pluginCards: PluginCard[] = [
     category: "协同办公",
   },
   {
-    id: "crm",
-    name: "CRM客户管理",
-    description: "同步Salesforce/钉钉CRM客户数据，打通销售全流程管理",
-    icon: Shield,
-    color: "text-indigo-400",
-    borderColor: "border-indigo-500/20 hover:border-indigo-500/40",
-    bgColor: "bg-indigo-500/10",
-    glowColor: "shadow-indigo-500/10 hover:shadow-indigo-500/20",
-    status: "available",
-    category: "销售管理",
-  },
-  {
     id: "workflow",
     name: "自动化工作流",
     description: "配置自动化触发规则，如新客户自动建档、逾期任务自动提醒",
@@ -132,16 +120,22 @@ const pluginCards: PluginCard[] = [
 
 export default function PluginsPage() {
   const { toast } = useToast();
-  const [plugins, setPlugins] = useState(pluginCards);
+  const { isConnected, connect, disconnect } = usePlugins();
   const [confirmDialog, setConfirmDialog] = useState<PluginCard | null>(null);
   const [disconnectDialog, setDisconnectDialog] = useState<PluginCard | null>(null);
 
+  const getPluginStatus = (plugin: PluginCard): PluginCard["status"] => {
+    if (plugin.status === "coming_soon") return "coming_soon";
+    return isConnected(plugin.id) ? "connected" : "available";
+  };
+
   const handleConnect = (plugin: PluginCard) => {
-    if (plugin.status === "coming_soon") {
+    const status = getPluginStatus(plugin);
+    if (status === "coming_soon") {
       toast({ title: "即将上线", description: `「${plugin.name}」正在开发中，敬请期待` });
       return;
     }
-    if (plugin.status === "connected") {
+    if (status === "connected") {
       setDisconnectDialog(plugin);
       return;
     }
@@ -150,21 +144,19 @@ export default function PluginsPage() {
 
   const confirmConnect = () => {
     if (!confirmDialog) return;
-    setPlugins((prev) =>
-      prev.map((p) => (p.id === confirmDialog.id ? { ...p, status: "connected" as const } : p))
-    );
-    toast({ title: "接入成功", description: `「${confirmDialog.name}」已成功连接` });
+    connect(confirmDialog.id);
+    toast({ title: "接入成功", description: `「${confirmDialog.name}」已成功连接，可在左侧菜单中访问` });
     setConfirmDialog(null);
   };
 
   const confirmDisconnect = () => {
     if (!disconnectDialog) return;
-    setPlugins((prev) =>
-      prev.map((p) => (p.id === disconnectDialog.id ? { ...p, status: "available" as const } : p))
-    );
+    disconnect(disconnectDialog.id);
     toast({ title: "已断开", description: `「${disconnectDialog.name}」已断开连接` });
     setDisconnectDialog(null);
   };
+
+  const connectedCount = pluginCards.filter(p => p.status !== "coming_soon" && isConnected(p.id)).length;
 
   return (
     <div className="p-4 md:p-6 space-y-6" data-testid="page-plugins">
@@ -180,19 +172,20 @@ export default function PluginsPage() {
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="outline" className="text-[10px] h-5 bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
-            {plugins.filter((p) => p.status === "connected").length} 已连接
+            {connectedCount} 已连接
           </Badge>
           <Badge variant="outline" className="text-[10px] h-5 bg-blue-500/10 text-blue-400 border-blue-500/20">
-            {plugins.length} 个插件
+            {pluginCards.length} 个插件
           </Badge>
         </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {plugins.map((plugin) => {
+        {pluginCards.map((plugin) => {
           const Icon = plugin.icon;
-          const isConnected = plugin.status === "connected";
-          const isComingSoon = plugin.status === "coming_soon";
+          const status = getPluginStatus(plugin);
+          const pluginConnected = status === "connected";
+          const isComingSoon = status === "coming_soon";
 
           return (
             <div
@@ -201,7 +194,7 @@ export default function PluginsPage() {
               onClick={() => handleConnect(plugin)}
               data-testid={`plugin-card-${plugin.id}`}
             >
-              {isConnected && (
+              {pluginConnected && (
                 <div className="absolute top-3 right-3 flex items-center gap-1.5" data-testid={`plugin-connected-${plugin.id}`}>
                   <span className="relative flex h-2.5 w-2.5">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
@@ -213,7 +206,7 @@ export default function PluginsPage() {
               {isComingSoon && (
                 <div className="absolute top-3 right-3">
                   <Badge variant="outline" className="text-[9px] h-4 bg-slate-500/10 text-slate-400 border-slate-500/20">
-                    即将上线
+                    敬请期待
                   </Badge>
                 </div>
               )}
@@ -228,10 +221,10 @@ export default function PluginsPage() {
               <div className="flex items-center justify-between">
                 <span className="text-[10px] text-slate-500 dark:text-slate-600">{plugin.category}</span>
                 <Button
-                  variant={isConnected ? "outline" : "default"}
+                  variant={pluginConnected ? "outline" : "default"}
                   size="sm"
                   className={`h-7 text-xs px-3 gap-1 ${
-                    isConnected
+                    pluginConnected
                       ? "border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10"
                       : isComingSoon
                         ? "bg-slate-700 text-slate-400 cursor-not-allowed"
@@ -243,7 +236,7 @@ export default function PluginsPage() {
                   }}
                   data-testid={`button-connect-${plugin.id}`}
                 >
-                  {isConnected ? (
+                  {pluginConnected ? (
                     <>
                       <CheckCircle2 className="h-3 w-3" />
                       管理
@@ -349,7 +342,7 @@ export default function PluginsPage() {
                 </div>
               </div>
               <p className="text-xs text-slate-400 dark:text-slate-500 leading-relaxed">
-                断开后将停止数据同步。已同步的数据不会被删除，可随时重新接入。
+                断开后将停止数据同步，并从左侧菜单中移除入口。已同步的数据不会被删除，可随时重新接入。
               </p>
             </div>
             <div className="border-t border-blue-500/10 px-6 py-4 flex gap-3">

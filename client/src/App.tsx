@@ -8,6 +8,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { TopBar } from "@/components/top-bar";
 import { useAuth } from "@/hooks/use-auth";
 import { ThemeProvider } from "@/hooks/use-theme";
+import { PluginProvider } from "@/hooks/use-plugins";
 import NotFound from "@/pages/not-found";
 import LandingPage from "@/pages/landing";
 import DashboardPage from "@/pages/dashboard";
@@ -18,6 +19,8 @@ import SummaryPage from "@/pages/summary";
 import AdminPage from "@/pages/admin";
 import PluginsPage from "@/pages/plugins";
 import ProfilePage from "@/pages/profile";
+import PluginExpensePage from "@/pages/plugin-expense";
+import PluginCrmPage from "@/pages/plugin-crm";
 import { Menu } from "lucide-react";
 
 function useIsMobile() {
@@ -83,6 +86,8 @@ function AuthenticatedApp() {
             <Route path="/admin" component={AdminPage} />
             <Route path="/plugins" component={PluginsPage} />
             <Route path="/profile" component={ProfilePage} />
+            <Route path="/plugin/expense" component={PluginExpensePage} />
+            <Route path="/plugin/crm" component={PluginCrmPage} />
             <Route component={NotFound} />
           </Switch>
         </main>
@@ -96,8 +101,10 @@ function App() {
     <ThemeProvider>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
-          <Toaster />
-          <AuthenticatedApp />
+          <PluginProvider>
+            <Toaster />
+            <AuthenticatedApp />
+          </PluginProvider>
         </TooltipProvider>
       </QueryClientProvider>
     </ThemeProvider>
