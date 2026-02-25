@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
@@ -32,10 +32,18 @@ import {
   Inbox,
   Trash2,
   Users,
+  ChevronDown,
+  ChevronRight,
+  Brain,
 } from "lucide-react";
 import type { DailySummary } from "@shared/schema";
 
 type ReceivedSummary = DailySummary & { userName?: string; profileImageUrl?: string };
+
+type DateGroup = {
+  date: string;
+  summaries: ReceivedSummary[];
+};
 
 export default function SummaryPage() {
   const { toast } = useToast();
@@ -47,6 +55,9 @@ export default function SummaryPage() {
   const [viewMode, setViewMode] = useState<"my" | "received">("my");
   const [selectedReceivedId, setSelectedReceivedId] = useState<number | null>(null);
   const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [expandedDates, setExpandedDates] = useState<Set<string>>(new Set());
+  const [teamSummaryDate, setTeamSummaryDate] = useState<string | null>(null);
+  const [isGeneratingTeam, setIsGeneratingTeam] = useState(false);
 
   const { data: historyList = [] } = useQuery<DailySummary[]>({
     queryKey: ["/api/daily-summaries"],
@@ -55,6 +66,18 @@ export default function SummaryPage() {
   const { data: receivedList = [] } = useQuery<ReceivedSummary[]>({
     queryKey: ["/api/daily-summaries/received"],
   });
+
+  const dateGroups = useMemo<DateGroup[]>(() => {
+    const map = new Map<string, ReceivedSummary[]>();
+    for (const s of receivedList) {
+      const existing = map.get(s.date) || [];
+      existing.push(s);
+      map.set(s.date, existing);
+    }
+    return Array.from(map.entries())
+      .sort((a, b) => b[0].localeCompare(a[0]))
+      .map(([date, summaries]) => ({ date, summaries }));
+  }, [receivedList]);
 
   const generateMutation = useMutation({
     mutationFn: async () => {
@@ -129,6 +152,51 @@ export default function SummaryPage() {
     },
   });
 
+  const handleGenerateTeamSummary = async (date: string) => {
+    setTeamSummaryDate(date);
+    setSelectedReceivedId(null);
+    setSelectedHistoryId(null);
+    setIsGeneratingTeam(true);
+    setSummaryContent("");
+    setViewMode("received");
+
+    try {
+      const res = await fetch("/api/daily-summaries/team-summary", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const reader = res.body?.getReader();
+      const decoder = new TextDecoder();
+      let content = "";
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          const text = decoder.decode(value);
+          const lines = text.split("\n");
+          for (const line of lines) {
+            if (line.startsWith("data: ")) {
+              try {
+                const data = JSON.parse(line.slice(6));
+                if (data.content) {
+                  content += data.content;
+                  setSummaryContent(content);
+                }
+              } catch {}
+            }
+          }
+        }
+      }
+    } catch (e: any) {
+      toast({ title: "生成失败", description: e.message, variant: "destructive" });
+    } finally {
+      setIsGeneratingTeam(false);
+    }
+  };
+
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(summaryContent);
@@ -156,6 +224,7 @@ export default function SummaryPage() {
   const handleSelectHistory = (item: DailySummary) => {
     setSelectedHistoryId(item.id);
     setSelectedReceivedId(null);
+    setTeamSummaryDate(null);
     setSummaryContent(item.content);
     setViewMode("my");
   };
@@ -163,17 +232,27 @@ export default function SummaryPage() {
   const handleSelectReceived = (item: ReceivedSummary) => {
     setSelectedReceivedId(item.id);
     setSelectedHistoryId(null);
+    setTeamSummaryDate(null);
     setSummaryContent(item.content);
     setViewMode("received");
   };
 
+  const toggleDateExpand = (date: string) => {
+    setExpandedDates(prev => {
+      const next = new Set(prev);
+      if (next.has(date)) next.delete(date);
+      else next.add(date);
+      return next;
+    });
+  };
+
   const formatHistoryDate = (date: string) => {
-    const d = new Date(date);
+    const d = new Date(date + "T00:00:00");
     return d.toLocaleDateString("zh-CN", { month: "long", day: "numeric" });
   };
 
   const formatHistoryDay = (date: string) => {
-    const d = new Date(date);
+    const d = new Date(date + "T00:00:00");
     return d.toLocaleDateString("zh-CN", { weekday: "short" });
   };
 
@@ -184,6 +263,22 @@ export default function SummaryPage() {
 
   const activeSummaryId = selectedHistoryId || (historyList.length > 0 ? historyList[0]?.id : null);
   const isCurrentSent = currentSelectedSummary?.status === "sent" || (!selectedHistoryId && todaySentSummary);
+
+  const headerTitle = (() => {
+    if (teamSummaryDate) {
+      return { icon: <Brain className="h-4 w-4 text-purple-500 dark:text-purple-400 shrink-0" />, text: `团队 AI 汇总 - ${formatHistoryDate(teamSummaryDate)}`, color: "text-purple-700 dark:text-purple-200" };
+    }
+    if (viewMode === "received" && currentReceivedSummary) {
+      return { icon: <Users className="h-4 w-4 text-amber-500 dark:text-amber-400 shrink-0" />, text: `${currentReceivedSummary.userName || "未知用户"} 的日报 - ${formatHistoryDate(currentReceivedSummary.date)}`, color: "text-amber-700 dark:text-amber-200" };
+    }
+    return {
+      icon: <FileText className="h-4 w-4 text-blue-400 shrink-0" />,
+      text: selectedHistoryId
+        ? `历史日报 - ${historyList.find(h => h.id === selectedHistoryId)?.date || ""}`
+        : `工作日报 - ${new Date().toLocaleDateString("zh-CN", { year: "numeric", month: "long", day: "numeric", weekday: "long" })}`,
+      color: "text-blue-700 dark:text-blue-200"
+    };
+  })();
 
   return (
     <div className="flex h-full" data-testid="page-summary">
@@ -270,44 +365,83 @@ export default function SummaryPage() {
                 )}
               </div>
             ) : (
-              <div className="p-2 space-y-1">
-                {receivedList.length === 0 ? (
+              <div className="p-2 space-y-0.5">
+                {dateGroups.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-10 text-center">
                     <Inbox className="h-8 w-8 text-blue-500/15 mb-2" />
                     <p className="text-xs text-slate-400 dark:text-slate-600">暂无收到的日报</p>
                     <p className="text-[10px] text-slate-500 dark:text-slate-700 mt-1">下属发送的日报将显示在此处</p>
                   </div>
                 ) : (
-                  receivedList.map((item) => (
-                    <button
-                      key={item.id}
-                      onClick={() => handleSelectReceived(item)}
-                      className={`w-full text-left rounded-lg p-3 transition-all ${
-                        selectedReceivedId === item.id
-                          ? "bg-amber-500/10 border border-amber-500/20 glow-border-active"
-                          : "hover:bg-amber-500/5 border border-transparent"
-                      }`}
-                      data-testid={`received-item-${item.id}`}
-                    >
-                      <div className="flex items-center gap-2 mb-1.5">
-                        <Avatar className="h-4 w-4">
-                          <AvatarImage src={item.profileImageUrl || ""} />
-                          <AvatarFallback className="bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[8px]">
-                            {(item.userName || "?")[0]}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="text-xs font-medium text-slate-700 dark:text-slate-300">{item.userName || "未知用户"}</span>
+                  dateGroups.map((group) => {
+                    const isExpanded = expandedDates.has(group.date);
+                    return (
+                      <div key={group.date}>
+                        <button
+                          onClick={() => toggleDateExpand(group.date)}
+                          className="w-full flex items-center gap-2 px-2.5 py-2 rounded-md hover:bg-amber-500/5 transition-all"
+                          data-testid={`date-group-${group.date}`}
+                        >
+                          {isExpanded ? (
+                            <ChevronDown className="h-3 w-3 text-amber-500 dark:text-amber-400 shrink-0" />
+                          ) : (
+                            <ChevronRight className="h-3 w-3 text-slate-400 shrink-0" />
+                          )}
+                          <Calendar className="h-3 w-3 text-amber-500 dark:text-amber-400 shrink-0" />
+                          <span className="text-xs font-medium text-slate-700 dark:text-slate-300">{formatHistoryDate(group.date)}</span>
+                          <span className="text-[10px] text-slate-400 dark:text-slate-600">{formatHistoryDay(group.date)}</span>
+                          <span className="ml-auto text-[10px] bg-amber-500/15 text-amber-600 dark:text-amber-400 rounded-full px-1.5">
+                            {group.summaries.length}人
+                          </span>
+                        </button>
+
+                        {isExpanded && (
+                          <div className="ml-3 pl-2.5 border-l border-amber-500/15 space-y-0.5 pb-1">
+                            <button
+                              onClick={() => handleGenerateTeamSummary(group.date)}
+                              disabled={isGeneratingTeam && teamSummaryDate === group.date}
+                              className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-md text-left transition-all ${
+                                teamSummaryDate === group.date
+                                  ? "bg-purple-500/10 border border-purple-500/20"
+                                  : "hover:bg-purple-500/5 border border-transparent"
+                              }`}
+                              data-testid={`button-team-summary-${group.date}`}
+                            >
+                              {isGeneratingTeam && teamSummaryDate === group.date ? (
+                                <Loader2 className="h-3 w-3 text-purple-500 dark:text-purple-400 shrink-0 animate-spin" />
+                              ) : (
+                                <Brain className="h-3 w-3 text-purple-500 dark:text-purple-400 shrink-0" />
+                              )}
+                              <span className="text-[11px] font-medium text-purple-600 dark:text-purple-400">
+                                {isGeneratingTeam && teamSummaryDate === group.date ? "生成中..." : "AI 团队汇总"}
+                              </span>
+                            </button>
+
+                            {group.summaries.map((item) => (
+                              <button
+                                key={item.id}
+                                onClick={() => handleSelectReceived(item)}
+                                className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-md text-left transition-all ${
+                                  selectedReceivedId === item.id
+                                    ? "bg-amber-500/10 border border-amber-500/20"
+                                    : "hover:bg-amber-500/5 border border-transparent"
+                                }`}
+                                data-testid={`received-item-${item.id}`}
+                              >
+                                <Avatar className="h-4 w-4 shrink-0">
+                                  <AvatarImage src={item.profileImageUrl || ""} />
+                                  <AvatarFallback className="bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[8px]">
+                                    {(item.userName || "?")[0]}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <span className="text-[11px] font-medium text-slate-700 dark:text-slate-300 truncate">{item.userName || "未知用户"}</span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                      <div className="flex items-center gap-2 pl-6">
-                        <Calendar className="h-3 w-3 text-amber-500 dark:text-amber-400 shrink-0" />
-                        <span className="text-[10px] text-slate-500 dark:text-slate-400">{formatHistoryDate(item.date)}</span>
-                        <span className="text-[10px] text-slate-400 dark:text-slate-600">{formatHistoryDay(item.date)}</span>
-                      </div>
-                      <p className="mt-1.5 text-[10px] text-slate-400 dark:text-slate-500 line-clamp-2 pl-6">
-                        {item.content.slice(0, 80)}...
-                      </p>
-                    </button>
-                  ))
+                    );
+                  })
                 )}
               </div>
             )}
@@ -331,6 +465,7 @@ export default function SummaryPage() {
               onClick={() => {
                 setSelectedHistoryId(null);
                 setSelectedReceivedId(null);
+                setTeamSummaryDate(null);
                 setSummaryContent("");
                 generateMutation.mutate();
               }}
@@ -351,51 +486,32 @@ export default function SummaryPage() {
         <div className="flex-1 glass-card rounded-xl overflow-hidden flex flex-col">
           <div className="glass-dialog-header px-4 md:px-6 py-3 flex items-center justify-between gap-2 shrink-0">
             <div className="flex items-center gap-2 min-w-0">
-              {viewMode === "received" && currentReceivedSummary ? (
-                <>
-                  <Users className="h-4 w-4 text-amber-500 dark:text-amber-400 shrink-0" />
-                  <span className="text-sm font-medium text-amber-700 dark:text-amber-200 truncate">
-                    {currentReceivedSummary.userName || "未知用户"} 的日报 - {formatHistoryDate(currentReceivedSummary.date)}
-                  </span>
-                </>
-              ) : (
-                <>
-                  <FileText className="h-4 w-4 text-blue-400 shrink-0" />
-                  <span className="text-sm font-medium text-blue-700 dark:text-blue-200 truncate">
-                    {selectedHistoryId
-                      ? `历史日报 - ${historyList.find(h => h.id === selectedHistoryId)?.date || ""}`
-                      : `工作日报 - ${new Date().toLocaleDateString("zh-CN", {
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                          weekday: "long",
-                        })}`
-                    }
-                  </span>
-                </>
-              )}
+              {headerTitle.icon}
+              <span className={`text-sm font-medium truncate ${headerTitle.color}`}>
+                {headerTitle.text}
+              </span>
             </div>
 
             {summaryContent && (
               <div className="flex items-center gap-1.5 shrink-0">
-                {viewMode === "my" && (
+                <button
+                  onClick={handleCopy}
+                  className="h-7 px-2 rounded-md text-[11px] font-medium text-slate-500 dark:text-slate-400 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-blue-500/10 border border-transparent hover:border-blue-500/15 transition-all flex items-center gap-1"
+                  data-testid="button-copy-summary"
+                >
+                  {copied ? <CheckCircle className="h-3 w-3 text-emerald-500" /> : <Copy className="h-3 w-3" />}
+                  {copied ? "已复制" : "复制"}
+                </button>
+                <button
+                  onClick={handleExport}
+                  className="h-7 px-2 rounded-md text-[11px] font-medium text-slate-500 dark:text-slate-400 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-blue-500/10 border border-transparent hover:border-blue-500/15 transition-all flex items-center gap-1"
+                  data-testid="button-export-summary"
+                >
+                  <Download className="h-3 w-3" />
+                  导出
+                </button>
+                {viewMode === "my" && !teamSummaryDate && (
                   <>
-                    <button
-                      onClick={handleCopy}
-                      className="h-7 px-2 rounded-md text-[11px] font-medium text-slate-500 dark:text-slate-400 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-blue-500/10 border border-transparent hover:border-blue-500/15 transition-all flex items-center gap-1"
-                      data-testid="button-copy-summary"
-                    >
-                      {copied ? <CheckCircle className="h-3 w-3 text-emerald-500" /> : <Copy className="h-3 w-3" />}
-                      {copied ? "已复制" : "复制"}
-                    </button>
-                    <button
-                      onClick={handleExport}
-                      className="h-7 px-2 rounded-md text-[11px] font-medium text-slate-500 dark:text-slate-400 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-blue-500/10 border border-transparent hover:border-blue-500/15 transition-all flex items-center gap-1"
-                      data-testid="button-export-summary"
-                    >
-                      <Download className="h-3 w-3" />
-                      导出
-                    </button>
                     <div className="w-px h-4 bg-slate-200 dark:bg-slate-700/50 mx-0.5" />
                     {isCurrentSent ? (
                       <span className="h-7 px-2.5 rounded-md text-[11px] font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-500/20 flex items-center gap-1">
@@ -415,13 +531,14 @@ export default function SummaryPage() {
                     ) : null}
                   </>
                 )}
-                {(selectedHistoryId || selectedReceivedId) && (
+                {(selectedHistoryId || selectedReceivedId || teamSummaryDate) && (
                   <>
-                    {viewMode === "my" && <div className="w-px h-4 bg-slate-200 dark:bg-slate-700/50 mx-0.5" />}
+                    <div className="w-px h-4 bg-slate-200 dark:bg-slate-700/50 mx-0.5" />
                     <button
                       onClick={() => {
                         setSelectedHistoryId(null);
                         setSelectedReceivedId(null);
+                        setTeamSummaryDate(null);
                         setSummaryContent("");
                         setViewMode("my");
                       }}
@@ -437,7 +554,7 @@ export default function SummaryPage() {
           </div>
 
           <div className="flex-1 p-6 min-h-0">
-            {!summaryContent && !generateMutation.isPending ? (
+            {!summaryContent && !generateMutation.isPending && !isGeneratingTeam ? (
               <div className="flex flex-col items-center justify-center h-full text-center">
                 <div className="h-20 w-20 rounded-full bg-blue-500/5 border border-blue-500/15 flex items-center justify-center mb-6">
                   <FileText className="h-10 w-10 text-blue-500/20" />
@@ -455,11 +572,11 @@ export default function SummaryPage() {
                   一键生成日报
                 </Button>
               </div>
-            ) : generateMutation.isPending && !summaryContent ? (
+            ) : (generateMutation.isPending || isGeneratingTeam) && !summaryContent ? (
               <div className="space-y-6 py-8">
                 <div className="flex items-center gap-3 text-sm text-blue-500/70 dark:text-blue-300/70">
                   <Loader2 className="h-4 w-4 animate-spin text-blue-400" />
-                  正在读取您的工作数据并生成日报...
+                  {isGeneratingTeam ? "正在汇总团队日报，生成 AI 分析..." : "正在读取您的工作数据并生成日报..."}
                 </div>
                 <div className="h-1 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
                   <div className="h-full w-1/3 progress-glow" />

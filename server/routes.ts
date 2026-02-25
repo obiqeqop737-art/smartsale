@@ -582,6 +582,65 @@ ${activityInfo}
     }
   });
 
+  app.post("/api/daily-summaries/team-summary", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { date } = req.body;
+      if (!date) return res.status(400).json({ message: "缺少日期参数" });
+
+      const allReceived = await storage.getReceivedSummaries(userId);
+      const dateSummaries = allReceived.filter(s => s.date === date);
+      if (dateSummaries.length === 0) {
+        return res.status(400).json({ message: "该日期没有收到的日报" });
+      }
+
+      const reportsText = dateSummaries.map((s, i) =>
+        `【${s.userName || "未知用户"} 的日报】\n${s.content}`
+      ).join("\n\n---\n\n");
+
+      const prompt = `你是一位团队管理者。以下是你的团队成员在${date}提交的工作日报。请生成一份团队工作汇总报告。
+
+${reportsText}
+
+请按以下格式生成团队汇总：
+1. 团队今日整体概况（简要总结团队当天的主要产出和工作方向）
+2. 各成员工作要点（逐人列出关键完成事项和进展）
+3. 团队协同与交叉事项（如有成员间相关联的工作，请标注）
+4. 需要关注的风险与问题（汇总各成员提到的风险点）
+5. 明日团队重点方向（基于各成员计划给出建议）
+
+请用专业简洁的语言，适合管理层快速阅读。`;
+
+      res.setHeader("Content-Type", "text/event-stream");
+      res.setHeader("Cache-Control", "no-cache");
+      res.setHeader("Connection", "keep-alive");
+
+      const stream = await ai.models.generateContentStream({
+        model: "gemini-3.1-pro-preview",
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        config: { maxOutputTokens: 8192 },
+      });
+
+      for await (const chunk of stream) {
+        const text = chunk.text || "";
+        if (text) {
+          res.write(`data: ${JSON.stringify({ content: text })}\n\n`);
+        }
+      }
+
+      res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
+      res.end();
+    } catch (error) {
+      console.error("Error generating team summary:", error);
+      if (res.headersSent) {
+        res.write(`data: ${JSON.stringify({ error: "生成团队汇总失败" })}\n\n`);
+        res.end();
+      } else {
+        res.status(500).json({ message: "生成团队汇总失败" });
+      }
+    }
+  });
+
   app.get("/api/admin/users", isAuthenticated, async (req: any, res) => {
     try {
       const currentUser = await storage.getUserById(req.user.claims.sub);

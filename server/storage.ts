@@ -302,7 +302,8 @@ export class DatabaseStorage implements IStorage {
       sentToUserId: dailySummaries.sentToUserId,
       sentAt: dailySummaries.sentAt,
       createdAt: dailySummaries.createdAt,
-      userName: users.username,
+      firstName: users.firstName,
+      lastName: users.lastName,
       profileImageUrl: users.profileImageUrl,
     })
     .from(dailySummaries)
@@ -313,8 +314,15 @@ export class DatabaseStorage implements IStorage {
     ))
     .orderBy(desc(dailySummaries.sentAt));
     return rows.map(r => ({
-      ...r,
-      userName: r.userName || undefined,
+      id: r.id,
+      userId: r.userId,
+      content: r.content,
+      date: r.date,
+      status: r.status,
+      sentToUserId: r.sentToUserId,
+      sentAt: r.sentAt,
+      createdAt: r.createdAt,
+      userName: [r.firstName, r.lastName].filter(Boolean).join("") || undefined,
       profileImageUrl: r.profileImageUrl || undefined,
     }));
   }
