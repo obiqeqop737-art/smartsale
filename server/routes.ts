@@ -580,7 +580,7 @@ ${activityInfo}
 
   app.get("/api/admin/users/:id/assets", isAuthenticated, async (req: any, res) => {
     try {
-      const currentUser = await storage.getUserById(req.user.id);
+      const currentUser = await storage.getUserById(req.user.claims.sub);
       if (currentUser?.role !== "admin") {
         return res.status(403).json({ message: "Forbidden" });
       }
@@ -595,11 +595,11 @@ ${activityInfo}
 
   app.post("/api/admin/handover", isAuthenticated, async (req: any, res) => {
     try {
-      const currentUser = await storage.getUserById(req.user.id);
+      const currentUser = await storage.getUserById(req.user.claims.sub);
       if (currentUser?.role !== "admin") {
         return res.status(403).json({ message: "Forbidden" });
       }
-      const operatorId = req.user.id;
+      const operatorId = req.user.claims.sub;
       const { fromUserId, toUserId, note } = req.body;
       if (!fromUserId || typeof fromUserId !== "string" || !toUserId || typeof toUserId !== "string") {
         return res.status(400).json({ message: "Missing or invalid fromUserId or toUserId" });
@@ -627,7 +627,7 @@ ${activityInfo}
 
   app.get("/api/admin/handover-logs", isAuthenticated, async (req: any, res) => {
     try {
-      const currentUser = await storage.getUserById(req.user.id);
+      const currentUser = await storage.getUserById(req.user.claims.sub);
       if (currentUser?.role !== "admin") {
         return res.status(403).json({ message: "Forbidden" });
       }

@@ -3,21 +3,7 @@ import { pgTable, text, varchar, serial, integer, timestamp, date } from "drizzl
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-export const users = pgTable("users", {
-  id: varchar("id").primaryKey(),
-  email: text("email").notNull(),
-  firstName: text("first_name"),
-  lastName: text("last_name"),
-  profileImageUrl: text("profile_image_url"),
-  department: text("department"),
-  superiorId: varchar("superior_id"),
-  role: text("role").notNull().default("user"),
-  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
-});
-
-export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true });
-export type User = typeof users.$inferSelect;
-export type InsertUser = z.infer<typeof insertUserSchema>;
+export * from "./models/auth";
 
 export const folders = pgTable("folders", {
   id: serial("id").primaryKey(),
