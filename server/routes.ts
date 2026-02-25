@@ -340,6 +340,18 @@ ${kbContext || "（用户尚未上传任何文件到知识库）"}
           detail: `完成任务: ${task.title}`,
           module: "tasks",
         });
+        const taskUser = await storage.getUserById(userId);
+        if (taskUser?.superiorId) {
+          storage.createNotification({
+            userId: taskUser.superiorId,
+            type: "task_completed",
+            title: "下属完成任务",
+            content: `${taskUser.firstName || "下属"} 完成了任务「${task.title}」`,
+            relatedId: task.id,
+            relatedType: "task",
+            fromUserId: userId,
+          }).catch(() => {});
+        }
       }
 
       res.json(task);
@@ -550,6 +562,15 @@ ${activityInfo}
         detail: "发送日报给领导",
         module: "summary",
       });
+      storage.createNotification({
+        userId: user.superiorId,
+        type: "summary_received",
+        title: "收到日报",
+        content: `${user.firstName || "下属"} 向您提交了日报`,
+        relatedId: summaryId,
+        relatedType: "daily_summary",
+        fromUserId: userId,
+      }).catch(() => {});
       res.json(result);
     } catch (error) {
       console.error("Error sending summary:", error);
@@ -875,11 +896,25 @@ ${reportsText}
       const userId = req.user.claims.sub;
       const { content } = req.body;
       if (!content || typeof content !== "string") return res.status(400).json({ message: "Content is required" });
+      const taskId = Number(req.params.id);
       const comment = await storage.createTaskComment({
-        taskId: Number(req.params.id),
+        taskId,
         userId,
         content,
       });
+      const commentedTask = await storage.getTaskById(taskId);
+      if (commentedTask && commentedTask.userId !== userId) {
+        const commenter = await storage.getUserById(userId);
+        storage.createNotification({
+          userId: commentedTask.userId,
+          type: "task_comment",
+          title: "任务收到新评论",
+          content: `${commenter?.firstName || "上级"} 评论了您的任务「${commentedTask.title}」`,
+          relatedId: taskId,
+          relatedType: "task",
+          fromUserId: userId,
+        }).catch(() => {});
+      }
       res.json(comment);
     } catch (error) {
       res.status(500).json({ message: "Failed to create comment" });
@@ -956,6 +991,58 @@ ${reportsText}
     } catch (error: any) {
       console.error("Manual intelligence generation failed:", error);
       res.status(500).json({ message: "情报生成失败: " + (error.message || "未知错误") });
+    }
+  });
+
+  app.get("/api/notifications", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const notifs = await storage.getNotifications(userId);
+      res.json(notifs);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch notifications" });
+    }
+  });
+
+  app.get("/api/notifications/unread-count", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const count = await storage.getUnreadNotificationCount(userId);
+      res.json({ count });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch unread count" });
+    }
+  });
+
+  app.patch("/api/notifications/:id/read", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const id = parseInt(req.params.id);
+      await storage.markNotificationRead(id, userId);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to mark notification as read" });
+    }
+  });
+
+  app.post("/api/notifications/read-all", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      await storage.markAllNotificationsRead(userId);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to mark all as read" });
+    }
+  });
+
+  app.delete("/api/notifications/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const id = parseInt(req.params.id);
+      await storage.deleteNotification(id, userId);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete notification" });
     }
   });
 

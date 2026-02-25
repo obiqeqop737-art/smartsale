@@ -23,6 +23,7 @@ An enterprise document management platform built with Express + React + PostgreS
 - `activity_logs` - User activity tracking for daily summary
 - `user_favorites` - Intelligence post bookmarks per user
 - `handover_logs` - Asset transfer records (admin handover center)
+- `notifications` - In-app notifications (type, title, content, relatedId/relatedType, fromUserId, isRead)
 
 ## Key Features
 - **Knowledge Base**: 3-level folder tree, file upload with batch progress, RAG AI chat
