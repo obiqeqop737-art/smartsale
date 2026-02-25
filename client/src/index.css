@@ -337,6 +337,16 @@
   animation: folder-expand 0.25s ease-out forwards;
 }
 
+.ai-hero-glow {
+  box-shadow: 0 0 30px rgba(59, 130, 246, 0.1), 0 0 60px rgba(59, 130, 246, 0.05);
+  animation: hero-glow 3s ease-in-out infinite;
+}
+
+@keyframes hero-glow {
+  0%, 100% { box-shadow: 0 0 30px rgba(59, 130, 246, 0.1), 0 0 60px rgba(59, 130, 246, 0.05); }
+  50% { box-shadow: 0 0 40px rgba(59, 130, 246, 0.2), 0 0 80px rgba(59, 130, 246, 0.1); }
+}
+
 .drop-zone-active {
   border-color: rgba(56, 130, 246, 0.5) !important;
   box-shadow: 0 0 30px rgba(56, 130, 246, 0.2), inset 0 0 20px rgba(56, 130, 246, 0.05) !important;

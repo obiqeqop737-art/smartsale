@@ -55,6 +55,10 @@ import {
   GripVertical,
   PanelLeftClose,
   PanelLeftOpen,
+  Sparkles,
+  BrainCircuit,
+  Zap,
+  Database,
 } from "lucide-react";
 import type { KnowledgeFile, ChatSession, ChatMessage, Folder as FolderType } from "@shared/schema";
 
@@ -323,17 +327,6 @@ export default function KnowledgePage() {
     },
   });
 
-  const createSessionMutation = useMutation({
-    mutationFn: async () => {
-      const res = await apiRequest("POST", "/api/chat-sessions", { title: "新对话" });
-      return res.json();
-    },
-    onSuccess: (session: ChatSession) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/chat-sessions"] });
-      setActiveSessionId(session.id);
-    },
-  });
-
   const handleBatchUpload = async () => {
     if (uploadFiles.length === 0) return;
     setIsUploading(true);
@@ -372,22 +365,39 @@ export default function KnowledgePage() {
   };
 
   const sendMessage = async () => {
-    if (!chatInput.trim() || !activeSessionId || isStreaming) return;
+    if (!chatInput.trim() || isStreaming) return;
     const content = chatInput.trim();
     setChatInput("");
     setIsStreaming(true);
     setStreamingContent("");
 
+    let sessionId = activeSessionId;
+    if (!sessionId) {
+      try {
+        const res = await apiRequest("POST", "/api/chat-sessions", {
+          title: content.slice(0, 30) + (content.length > 30 ? "..." : ""),
+        });
+        const session: ChatSession = await res.json();
+        sessionId = session.id;
+        setActiveSessionId(session.id);
+        queryClient.invalidateQueries({ queryKey: ["/api/chat-sessions"] });
+      } catch {
+        toast({ title: "创建对话失败", variant: "destructive" });
+        setIsStreaming(false);
+        return;
+      }
+    }
+
     queryClient.setQueryData<ChatMessage[]>(
-      ["/api/chat-sessions", activeSessionId, "messages"],
+      ["/api/chat-sessions", sessionId, "messages"],
       (old = []) => [
         ...old,
-        { id: Date.now(), sessionId: activeSessionId, userId: "", role: "user", content, createdAt: new Date() } as ChatMessage,
+        { id: Date.now(), sessionId, userId: "", role: "user", content, createdAt: new Date() } as ChatMessage,
       ]
     );
 
     try {
-      const res = await fetch(`/api/chat-sessions/${activeSessionId}/messages`, {
+      const res = await fetch(`/api/chat-sessions/${sessionId}/messages`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content }),
@@ -422,7 +432,7 @@ export default function KnowledgePage() {
     } finally {
       setIsStreaming(false);
       setStreamingContent("");
-      queryClient.invalidateQueries({ queryKey: ["/api/chat-sessions", activeSessionId, "messages"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/chat-sessions", sessionId, "messages"] });
     }
   };
 
@@ -548,20 +558,22 @@ export default function KnowledgePage() {
 
         <div className="border-t border-blue-500/10 pt-3">
           <div className="flex items-center justify-between px-1 mb-2">
-            <span className="text-[10px] font-medium text-slate-400 dark:text-slate-600 uppercase tracking-wider">对话列表</span>
-            <button
-              onClick={() => createSessionMutation.mutate()}
-              className="text-blue-400/60 hover:text-blue-400"
-              data-testid="button-new-chat"
-            >
-              <Plus className="h-3.5 w-3.5" />
-            </button>
+            <span className="text-[10px] font-medium text-slate-400 dark:text-slate-600 uppercase tracking-wider">对话历史</span>
+            {sessions.length > 0 && (
+              <button
+                onClick={() => setActiveSessionId(null)}
+                className="text-[10px] text-blue-400/60 hover:text-blue-400 transition-colors"
+                data-testid="button-new-chat"
+              >
+                新对话
+              </button>
+            )}
           </div>
           <ScrollArea className="max-h-[160px]">
             {sessions.length === 0 ? (
               <div className="py-4 text-center text-slate-400 dark:text-slate-600">
                 <MessageSquare className="mx-auto mb-1 h-5 w-5 opacity-30" />
-                <p className="text-[10px]">暂无对话</p>
+                <p className="text-[10px]">直接输入问题开始对话</p>
               </div>
             ) : (
               <div className="space-y-0.5">
@@ -596,122 +608,139 @@ export default function KnowledgePage() {
         >
           <PanelLeftOpen className="h-4 w-4" />
         </button>
-        {!activeSessionId ? (
-          <div className="flex flex-1 flex-col items-center justify-center text-center px-6 md:px-8">
-            <div className="h-16 w-16 md:h-20 md:w-20 rounded-full bg-blue-500/5 border border-blue-500/15 flex items-center justify-center mb-4 md:mb-6">
-              <Bot className="h-8 w-8 md:h-10 md:w-10 text-blue-500/30" />
-            </div>
-            <h3 className="mb-2 text-base md:text-lg font-medium text-slate-600 dark:text-slate-300">开始一个新对话</h3>
-            <p className="mb-6 max-w-sm text-sm text-slate-400 dark:text-slate-500">
-              基于您的个人知识库进行精准问答，涵盖历史报价、合同规范和客户记录
-            </p>
-            <Button
-              onClick={() => createSessionMutation.mutate()}
-              className="glow-btn text-white border-0"
-              data-testid="button-start-chat"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              新建对话
-            </Button>
-          </div>
-        ) : (
-          <>
-            <div className="flex-1 overflow-auto px-3 md:px-6 py-4">
-              <div className="max-w-3xl mx-auto space-y-4 pt-8 md:pt-0">
-                {msgsLoading ? (
-                  <div className="space-y-4">
-                    {[1, 2, 3].map((i) => (
-                      <div key={i} className={`flex ${i % 2 === 0 ? "justify-end" : ""}`}>
-                        <div className="h-16 w-3/4 rounded-lg glass-card animate-pulse" />
-                      </div>
-                    ))}
+
+        <div className="flex-1 overflow-auto px-3 md:px-6 py-4">
+          <div className="max-w-3xl mx-auto space-y-4 pt-8 md:pt-0">
+            {activeSessionId && msgsLoading ? (
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className={`flex ${i % 2 === 0 ? "justify-end" : ""}`}>
+                    <div className="h-16 w-3/4 rounded-lg glass-card animate-pulse" />
                   </div>
-                ) : messages.length === 0 && !streamingContent ? (
-                  <div className="flex flex-col items-center justify-center py-16 text-center">
-                    <Bot className="mb-3 h-10 w-10 text-blue-500/20" />
-                    <p className="text-sm text-slate-400 dark:text-slate-500">向 AI 提出您的问题</p>
+                ))}
+              </div>
+            ) : (!activeSessionId || (messages.length === 0 && !streamingContent)) && !activeSessionId ? (
+              <div className="flex flex-col items-center justify-center h-full min-h-[60vh]">
+                <div className="relative mb-8">
+                  <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border border-blue-500/20 flex items-center justify-center backdrop-blur-sm ai-hero-glow">
+                    <BrainCircuit className="h-10 w-10 text-blue-400/80" />
                   </div>
-                ) : (
-                  <>
-                    {messages.map((msg) => (
-                      <div
-                        key={msg.id}
-                        className={`flex gap-3 ${msg.role === "user" ? "flex-row-reverse" : ""}`}
-                      >
-                        <div
-                          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border ${
-                            msg.role === "user"
-                              ? "bg-blue-500 border-blue-400/30"
-                              : "bg-blue-500/10 border-blue-500/20"
-                          }`}
-                        >
-                          {msg.role === "user" ? (
-                            <User className="h-4 w-4 text-white" />
-                          ) : (
-                            <Bot className="h-4 w-4 text-blue-400" />
-                          )}
-                        </div>
-                        <div
-                          className={`max-w-[85%] md:max-w-[75%] rounded-lg px-3 md:px-4 py-2.5 md:py-3 text-sm leading-relaxed ${
-                            msg.role === "user"
-                              ? "glow-btn text-white"
-                              : "glass-card"
-                          }`}
-                        >
-                          <div className="prose prose-sm dark:prose-invert max-w-none prose-p:leading-relaxed prose-pre:bg-slate-800/50 prose-code:text-blue-400">
-                            <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
-                          </div>
-                        </div>
+                  <div className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-blue-500/20 border border-blue-400/30 flex items-center justify-center">
+                    <Sparkles className="h-3 w-3 text-blue-400 animate-pulse" />
+                  </div>
+                </div>
+
+                <h3 className="mb-2 text-lg font-semibold text-slate-700 dark:text-slate-200 tracking-tight">
+                  知识库 AI 助手
+                </h3>
+                <p className="mb-8 max-w-md text-center text-sm text-slate-400 dark:text-slate-500 leading-relaxed">
+                  基于您的文档知识库进行智能问答，涵盖历史报价、合同规范和客户记录
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8 w-full max-w-lg">
+                  {[
+                    { icon: Database, label: "知识检索", desc: "精准匹配文档内容" },
+                    { icon: Zap, label: "智能分析", desc: "深度理解业务语义" },
+                    { icon: Sparkles, label: "AI 生成", desc: "结构化回答与建议" },
+                  ].map((item) => (
+                    <div
+                      key={item.label}
+                      className="group glass-card rounded-xl p-3 border border-blue-500/10 hover:border-blue-500/25 transition-all duration-300 text-center cursor-default"
+                    >
+                      <div className="h-8 w-8 mx-auto mb-2 rounded-lg bg-blue-500/8 border border-blue-500/15 flex items-center justify-center group-hover:bg-blue-500/15 transition-colors">
+                        <item.icon className="h-4 w-4 text-blue-400/70 group-hover:text-blue-400 transition-colors" />
                       </div>
-                    ))}
-                    {streamingContent && (
-                      <div className="flex gap-3">
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-500/10 border border-blue-500/20">
-                          <Bot className="h-4 w-4 text-blue-400" />
-                        </div>
-                        <div className="max-w-[75%] rounded-lg glass-card px-4 py-3 text-sm leading-relaxed">
-                          <div className="prose prose-sm dark:prose-invert max-w-none prose-p:leading-relaxed prose-pre:bg-slate-800/50 prose-code:text-blue-400">
-                            <ReactMarkdown remarkPlugins={[remarkGfm]}>{streamingContent}</ReactMarkdown>
-                          </div>
-                        </div>
+                      <p className="text-xs font-medium text-slate-600 dark:text-slate-300">{item.label}</p>
+                      <p className="text-[10px] text-slate-400 dark:text-slate-600 mt-0.5">{item.desc}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <>
+                {messages.map((msg) => (
+                  <div
+                    key={msg.id}
+                    className={`flex gap-3 ${msg.role === "user" ? "flex-row-reverse" : ""}`}
+                  >
+                    <div
+                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border ${
+                        msg.role === "user"
+                          ? "bg-blue-500 border-blue-400/30"
+                          : "bg-blue-500/10 border-blue-500/20"
+                      }`}
+                    >
+                      {msg.role === "user" ? (
+                        <User className="h-4 w-4 text-white" />
+                      ) : (
+                        <Bot className="h-4 w-4 text-blue-400" />
+                      )}
+                    </div>
+                    <div
+                      className={`max-w-[85%] md:max-w-[75%] rounded-lg px-3 md:px-4 py-2.5 md:py-3 text-sm leading-relaxed ${
+                        msg.role === "user"
+                          ? "glow-btn text-white"
+                          : "glass-card"
+                      }`}
+                    >
+                      <div className="prose prose-sm dark:prose-invert max-w-none prose-p:leading-relaxed prose-pre:bg-slate-800/50 prose-code:text-blue-400">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
                       </div>
-                    )}
-                  </>
+                    </div>
+                  </div>
+                ))}
+                {streamingContent && (
+                  <div className="flex gap-3">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-500/10 border border-blue-500/20">
+                      <Bot className="h-4 w-4 text-blue-400" />
+                    </div>
+                    <div className="max-w-[75%] rounded-lg glass-card px-4 py-3 text-sm leading-relaxed">
+                      <div className="prose prose-sm dark:prose-invert max-w-none prose-p:leading-relaxed prose-pre:bg-slate-800/50 prose-code:text-blue-400">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{streamingContent}</ReactMarkdown>
+                      </div>
+                    </div>
+                  </div>
                 )}
-                <div ref={messagesEndRef} />
-              </div>
+              </>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+        </div>
+
+        <div className="border-t border-blue-500/10 p-3 md:p-4">
+          <div className="max-w-3xl mx-auto">
+            <div className="relative flex items-end gap-2 rounded-xl glass-card border border-blue-500/15 hover:border-blue-500/30 transition-all duration-300 p-2 focus-within:border-blue-500/40 focus-within:shadow-[0_0_20px_rgba(59,130,246,0.08)]">
+              <Textarea
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                  }
+                }}
+                placeholder={activeSessionId ? "继续提问... (Enter 发送)" : "输入问题，开始 AI 对话..."}
+                className="min-h-[40px] max-h-[120px] resize-none border-0 bg-transparent shadow-none focus-visible:ring-0 text-sm text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-600"
+                data-testid="input-chat-message"
+              />
+              <button
+                onClick={sendMessage}
+                disabled={!chatInput.trim() || isStreaming}
+                className="shrink-0 h-9 w-9 rounded-lg flex items-center justify-center transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-400 hover:to-blue-500 text-white shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30"
+                data-testid="button-send-message"
+              >
+                {isStreaming ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+              </button>
             </div>
-            <div className="border-t border-blue-500/10 p-3 md:p-4">
-              <div className="max-w-3xl mx-auto flex gap-2">
-                <Textarea
-                  value={chatInput}
-                  onChange={(e) => setChatInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      sendMessage();
-                    }
-                  }}
-                  placeholder="输入您的问题... (Enter 发送, Shift+Enter 换行)"
-                  className="min-h-[44px] max-h-[120px] resize-none glass-input text-slate-200"
-                  data-testid="input-chat-message"
-                />
-                <Button
-                  onClick={sendMessage}
-                  disabled={!chatInput.trim() || isStreaming}
-                  className="glow-btn text-white border-0 shrink-0"
-                  data-testid="button-send-message"
-                >
-                  {isStreaming ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Send className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
-            </div>
-          </>
-        )}
+            <p className="text-center text-[10px] text-slate-400/60 dark:text-slate-600/60 mt-2">
+              基于知识库文档的 RAG 智能问答 · 按 Enter 发送
+            </p>
+          </div>
+        </div>
       </div>
 
       <Dialog open={folderDialogOpen} onOpenChange={setFolderDialogOpen}>
