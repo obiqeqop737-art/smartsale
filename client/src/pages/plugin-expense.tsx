@@ -310,7 +310,6 @@ export default function PluginExpensePage() {
             返回
           </Button>
         </div>
-
         <div className="glass-card rounded-xl p-5 space-y-4 border border-purple-500/15">
           <div className="flex items-center gap-2 mb-1">
             <Sparkles className="h-4 w-4 text-purple-400" />
@@ -322,7 +321,7 @@ export default function PluginExpensePage() {
           <p className="text-xs text-slate-400 dark:text-slate-500 -mt-2">
             用自然语言描述您的出差或报销需求，AI 将自动识别并填写表单字段
           </p>
-          <div className="relative">
+          <div className="relative mt-[6px] mb-[6px]">
             <textarea
               ref={aiInputRef}
               value={aiInput}
@@ -355,7 +354,6 @@ export default function PluginExpensePage() {
             ))}
           </div>
         </div>
-
         <div className="flex items-center gap-2">
           <Button
             variant={formType === "travel" ? "default" : "outline"}
@@ -384,7 +382,6 @@ export default function PluginExpensePage() {
             </span>
           )}
         </div>
-
         {formType === "travel" && (
           <div className="glass-card rounded-xl p-5 space-y-5">
             <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-2">
@@ -414,7 +411,6 @@ export default function PluginExpensePage() {
             <FormField label="备注" value={(formData as TravelForm)?.remarks ?? ""} onChange={v => updateTravelField("remarks", v)} placeholder="其他需要说明的事项" highlight={filledFields.has("remarks")} />
           </div>
         )}
-
         {formType === "reimbursement" && (
           <div className="glass-card rounded-xl p-5 space-y-5">
             <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-2">
@@ -483,7 +479,6 @@ export default function PluginExpensePage() {
             <FormField label="备注" value={(formData as ReimbursementForm)?.remarks ?? ""} onChange={v => updateReimbursementField("remarks", v)} placeholder="其他需要说明的事项" highlight={filledFields.has("remarks")} />
           </div>
         )}
-
         <div className="flex gap-3 justify-end">
           <Button variant="outline" onClick={() => { setShowForm(false); setFormData(null); }} className="border-slate-600 text-slate-400 hover:bg-slate-800/50" data-testid="button-cancel-form">
             取消
