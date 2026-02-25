@@ -328,7 +328,7 @@ export default function PluginExpensePage() {
               value={aiInput}
               onChange={e => setAiInput(e.target.value)}
               placeholder="例如：下周一去宁德拜访宁德时代张总，高铁往返，住2晚"
-              className="glass-input w-full min-h-[72px] px-4 py-3 pr-12 text-sm rounded-xl resize-none leading-relaxed"
+              className="glass-input w-full min-h-[80px] px-4 py-3 pb-12 text-sm rounded-xl resize-none leading-relaxed"
               onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleAIParse(); } }}
               data-testid="input-ai-sentence"
             />
