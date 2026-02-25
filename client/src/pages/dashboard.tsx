@@ -56,10 +56,10 @@ const activityIconMap: Record<string, typeof FileText> = {
 };
 
 const activityModuleColors: Record<string, string> = {
-  knowledge: "text-blue-400",
-  tasks: "text-emerald-400",
-  intelligence: "text-purple-400",
-  summary: "text-amber-400",
+  knowledge: "text-blue-500 dark:text-blue-400",
+  tasks: "text-emerald-500 dark:text-emerald-400",
+  intelligence: "text-purple-500 dark:text-purple-400",
+  summary: "text-amber-500 dark:text-amber-400",
 };
 
 interface DashboardStats {
@@ -347,10 +347,10 @@ export default function DashboardPage() {
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
               {stats.recentActivity.map((activity) => {
                 const Icon = activityIconMap[activity.action] || Activity;
-                const modColor = activityModuleColors[activity.module] || "text-slate-400";
+                const modColor = activityModuleColors[activity.module] || "text-slate-500 dark:text-slate-400";
                 return (
                   <div key={activity.id} className="flex items-center gap-3 rounded-lg p-2.5 hover:bg-blue-500/5 transition-colors" data-testid={`activity-item-${activity.id}`}>
-                    <div className="h-7 w-7 rounded-md bg-slate-800/50 border border-slate-700/50 flex items-center justify-center shrink-0">
+                    <div className="h-7 w-7 rounded-md bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 flex items-center justify-center shrink-0">
                       <Icon className={`h-3.5 w-3.5 ${modColor}`} />
                     </div>
                     <div className="flex-1 min-w-0">
