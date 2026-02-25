@@ -1,5 +1,5 @@
 import { useLocation } from "wouter";
-import { Search, Bell, ChevronRight, Home, Sun, Moon } from "lucide-react";
+import { Search, Bell, ChevronRight, Home, Sun, Moon, Menu } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,9 +24,11 @@ const routeNames: Record<string, string> = {
 
 interface TopBarProps {
   user: User;
+  isMobile?: boolean;
+  onMenuClick?: () => void;
 }
 
-export function TopBar({ user }: TopBarProps) {
+export function TopBar({ user, isMobile, onMenuClick }: TopBarProps) {
   const [location] = useLocation();
   const [searchOpen, setSearchOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
@@ -34,7 +36,16 @@ export function TopBar({ user }: TopBarProps) {
 
   return (
     <div className="h-12 border-b border-blue-500/10 bg-white/60 dark:bg-slate-950/40 backdrop-blur-sm flex items-center justify-between px-4 md:px-6 shrink-0" data-testid="top-bar">
-      <div className="flex items-center gap-2 text-sm pl-10 md:pl-0">
+      <div className="flex items-center gap-2 text-sm">
+        {isMobile && onMenuClick && (
+          <button
+            onClick={onMenuClick}
+            className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-blue-500/10 text-blue-500 dark:text-blue-400 shrink-0 -ml-1 mr-1"
+            data-testid="button-mobile-menu"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+        )}
         <Home className="h-3.5 w-3.5 text-slate-400 dark:text-slate-600 hidden md:block" />
         <ChevronRight className="h-3 w-3 text-slate-300 dark:text-slate-700 hidden md:block" />
         <span className="text-slate-700 dark:text-slate-300 font-medium text-xs md:text-sm truncate">{currentPage}</span>

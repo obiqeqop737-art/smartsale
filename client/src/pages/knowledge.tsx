@@ -251,7 +251,7 @@ export default function KnowledgePage() {
 
   const [deleteFileId, setDeleteFileId] = useState<number | null>(null);
   const [deleteFolderId, setDeleteFolderId] = useState<number | null>(null);
-  const [showPanel, setShowPanel] = useState(true);
+  const [showPanel, setShowPanel] = useState(window.innerWidth >= 768);
 
   const { data: folders = [] } = useQuery<FolderType[]>({
     queryKey: ["/api/folders"],
@@ -461,7 +461,13 @@ export default function KnowledgePage() {
 
   return (
     <div className="flex h-full" data-testid="page-knowledge">
-      <div className={`${showPanel ? "flex w-72 md:w-72" : "hidden"} flex-col gap-3 p-3 border-r border-blue-500/10 max-md:absolute max-md:inset-y-0 max-md:left-0 max-md:z-30 max-md:w-64 max-md:glass-sidebar`}>
+      {showPanel && (
+        <div
+          className="fixed inset-0 z-20 bg-black/40 backdrop-blur-sm md:hidden"
+          onClick={() => setShowPanel(false)}
+        />
+      )}
+      <div className={`${showPanel ? "flex" : "hidden md:flex"} w-64 md:w-72 flex-col gap-3 p-3 border-r border-blue-500/10 max-md:fixed max-md:inset-y-0 max-md:left-0 max-md:z-30 max-md:w-64 max-md:bg-white max-md:dark:bg-slate-950 max-md:shadow-xl`}>
         <div className="flex items-center justify-between px-1">
           <span className="text-xs font-semibold text-blue-600/80 dark:text-blue-300/80 uppercase tracking-wider">目录导航</span>
           <div className="flex gap-1">
@@ -482,6 +488,15 @@ export default function KnowledgePage() {
               data-testid="button-upload-file"
             >
               <Upload className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-blue-400/60 hover:text-blue-400 hover:bg-blue-500/10 md:hidden"
+              onClick={() => setShowPanel(false)}
+              data-testid="button-close-panel"
+            >
+              <X className="h-3.5 w-3.5" />
             </Button>
           </div>
         </div>
@@ -573,20 +588,20 @@ export default function KnowledgePage() {
         </div>
       </div>
 
-      <div className="flex flex-1 flex-col relative">
+      <div className="flex flex-1 flex-col min-w-0 relative">
         <button
           onClick={() => setShowPanel(!showPanel)}
-          className="absolute top-3 left-3 z-20 flex h-7 w-7 items-center justify-center rounded-md glass-card text-blue-400/60 hover:text-blue-400 md:hidden"
+          className="absolute top-2 left-2 z-10 flex h-8 w-8 items-center justify-center rounded-lg bg-white/80 dark:bg-slate-900/80 backdrop-blur border border-blue-500/15 text-blue-400/70 hover:text-blue-400 shadow-sm md:hidden"
           data-testid="button-toggle-panel"
         >
-          {showPanel ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeftOpen className="h-4 w-4" />}
+          <PanelLeftOpen className="h-4 w-4" />
         </button>
         {!activeSessionId ? (
-          <div className="flex flex-1 flex-col items-center justify-center text-center px-8">
-            <div className="h-20 w-20 rounded-full bg-blue-500/5 border border-blue-500/15 flex items-center justify-center mb-6">
-              <Bot className="h-10 w-10 text-blue-500/30" />
+          <div className="flex flex-1 flex-col items-center justify-center text-center px-6 md:px-8">
+            <div className="h-16 w-16 md:h-20 md:w-20 rounded-full bg-blue-500/5 border border-blue-500/15 flex items-center justify-center mb-4 md:mb-6">
+              <Bot className="h-8 w-8 md:h-10 md:w-10 text-blue-500/30" />
             </div>
-            <h3 className="mb-2 text-lg font-medium text-slate-600 dark:text-slate-300">开始一个新对话</h3>
+            <h3 className="mb-2 text-base md:text-lg font-medium text-slate-600 dark:text-slate-300">开始一个新对话</h3>
             <p className="mb-6 max-w-sm text-sm text-slate-400 dark:text-slate-500">
               基于您的个人知识库进行精准问答，涵盖历史报价、合同规范和客户记录
             </p>
@@ -601,8 +616,8 @@ export default function KnowledgePage() {
           </div>
         ) : (
           <>
-            <div className="flex-1 overflow-auto px-6 py-4">
-              <div className="max-w-3xl mx-auto space-y-4">
+            <div className="flex-1 overflow-auto px-3 md:px-6 py-4">
+              <div className="max-w-3xl mx-auto space-y-4 pt-8 md:pt-0">
                 {msgsLoading ? (
                   <div className="space-y-4">
                     {[1, 2, 3].map((i) => (
@@ -637,7 +652,7 @@ export default function KnowledgePage() {
                           )}
                         </div>
                         <div
-                          className={`max-w-[75%] rounded-lg px-4 py-3 text-sm leading-relaxed ${
+                          className={`max-w-[85%] md:max-w-[75%] rounded-lg px-3 md:px-4 py-2.5 md:py-3 text-sm leading-relaxed ${
                             msg.role === "user"
                               ? "glow-btn text-white"
                               : "glass-card"
@@ -666,7 +681,7 @@ export default function KnowledgePage() {
                 <div ref={messagesEndRef} />
               </div>
             </div>
-            <div className="border-t border-blue-500/10 p-4">
+            <div className="border-t border-blue-500/10 p-3 md:p-4">
               <div className="max-w-3xl mx-auto flex gap-2">
                 <Textarea
                   value={chatInput}
