@@ -663,6 +663,22 @@ ${reportsText}
     }
   });
 
+  app.get("/api/users", isAuthenticated, async (req: any, res) => {
+    try {
+      const allUsers = await storage.getAllUsers();
+      res.json(allUsers.map(u => ({
+        id: u.id,
+        firstName: u.firstName,
+        lastName: u.lastName,
+        email: u.email,
+        profileImageUrl: u.profileImageUrl,
+        departmentId: u.departmentId,
+      })));
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
   app.get("/api/admin/users", isAuthenticated, async (req: any, res) => {
     try {
       const currentUser = await storage.getUserById(req.user.claims.sub);
@@ -991,6 +1007,33 @@ ${reportsText}
     } catch (error: any) {
       console.error("Manual intelligence generation failed:", error);
       res.status(500).json({ message: "情报生成失败: " + (error.message || "未知错误") });
+    }
+  });
+
+  app.post("/api/intelligence-posts/:id/share", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const postId = parseInt(req.params.id);
+      const { targetUserId } = req.body;
+      if (!targetUserId) return res.status(400).json({ message: "Target user required" });
+
+      const post = await storage.getIntelligencePostById(postId);
+      if (!post) return res.status(404).json({ message: "Post not found" });
+
+      const sender = await storage.getUserById(userId);
+      await storage.createNotification({
+        userId: targetUserId,
+        type: "intel_shared",
+        title: "收到情报分享",
+        content: `${sender?.firstName || "同事"} 向您分享了情报「${post.title}」`,
+        relatedId: postId,
+        relatedType: "intelligence",
+        fromUserId: userId,
+      });
+
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to share post" });
     }
   });
 

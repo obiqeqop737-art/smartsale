@@ -32,6 +32,7 @@ const notifIconMap: Record<string, typeof Bell> = {
   task_comment: MessageSquare,
   task_completed: CheckCircle2,
   intelligence_update: Newspaper,
+  intel_shared: Newspaper,
   system: Info,
 };
 
@@ -40,6 +41,7 @@ const notifColorMap: Record<string, string> = {
   task_comment: "text-purple-500 dark:text-purple-400 bg-purple-100 dark:bg-purple-500/15",
   task_completed: "text-emerald-500 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-500/15",
   intelligence_update: "text-amber-500 dark:text-amber-400 bg-amber-100 dark:bg-amber-500/15",
+  intel_shared: "text-orange-500 dark:text-orange-400 bg-orange-100 dark:bg-orange-500/15",
   system: "text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-500/15",
 };
 

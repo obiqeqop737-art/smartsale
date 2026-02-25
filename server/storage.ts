@@ -222,6 +222,11 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
+  async getIntelligencePostById(id: number): Promise<IntelligencePost | undefined> {
+    const [post] = await db.select().from(intelligencePosts).where(eq(intelligencePosts.id, id));
+    return post;
+  }
+
   async getIntelligencePosts(): Promise<IntelligencePost[]> {
     return db.select().from(intelligencePosts).orderBy(desc(intelligencePosts.publishedAt));
   }

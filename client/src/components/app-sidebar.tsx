@@ -1,5 +1,6 @@
 import { useLocation, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
 import { Brain, Radar, KanbanSquare, FileText, LogOut, ChevronLeft, ChevronRight, LayoutDashboard, Puzzle, Shield, User as UserIcon } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -37,11 +38,27 @@ export function AppSidebar({ user, collapsed, onToggle, onNavigate }: AppSidebar
   const { data: intelData } = useQuery<IntelligencePost[]>({ queryKey: ["/api/intelligence-posts"] });
 
   const todoCount = tasksData?.filter(t => t.status === "todo").length ?? 0;
-  const intelCount = intelData?.length ?? 0;
+
+  const [hasNewIntel, setHasNewIntel] = useState(false);
+  useEffect(() => {
+    if (intelData && intelData.length > 0) {
+      const latestTime = Math.max(...intelData.map(p => new Date(p.createdAt).getTime()));
+      const lastSeen = parseInt(localStorage.getItem("intel_last_seen") || "0", 10);
+      setHasNewIntel(latestTime > lastSeen);
+    }
+  }, [intelData]);
+
+  useEffect(() => {
+    if (location === "/intelligence" && intelData && intelData.length > 0) {
+      const latestTime = Math.max(...intelData.map(p => new Date(p.createdAt).getTime()));
+      localStorage.setItem("intel_last_seen", latestTime.toString());
+      setHasNewIntel(false);
+    }
+  }, [location, intelData]);
 
   const badges: Record<string, number> = {
     tasks: todoCount,
-    intel: intelCount,
+    intel: hasNewIntel ? -1 : 0,
   };
 
   const renderNavLink = (item: { title: string; url: string; altUrl: string | null; icon: any; desc: string; badgeKey: string | null }, badgeVal: number = 0) => {
@@ -61,6 +78,11 @@ export function AppSidebar({ user, collapsed, onToggle, onNavigate }: AppSidebar
         {!collapsed && (
           <>
             <span className="text-sm truncate flex-1">{item.title}</span>
+            {badgeVal === -1 && (
+              <span className="flex h-5 items-center justify-center rounded-full bg-red-500/15 px-1.5 text-[10px] font-medium text-red-400 border border-red-500/20 animate-pulse">
+                NEW
+              </span>
+            )}
             {badgeVal > 0 && (
               <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-blue-500/15 px-1.5 text-[10px] font-medium text-blue-400 border border-blue-500/20">
                 {badgeVal > 99 ? "99+" : badgeVal}
@@ -68,8 +90,8 @@ export function AppSidebar({ user, collapsed, onToggle, onNavigate }: AppSidebar
             )}
           </>
         )}
-        {collapsed && badgeVal > 0 && (
-          <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-blue-500" />
+        {collapsed && (badgeVal > 0 || badgeVal === -1) && (
+          <span className={`absolute top-1 right-1 h-2 w-2 rounded-full ${badgeVal === -1 ? "bg-red-500 animate-pulse" : "bg-blue-500"}`} />
         )}
       </Link>
     );

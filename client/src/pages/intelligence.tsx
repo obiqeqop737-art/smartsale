@@ -15,10 +15,13 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Radar, TrendingUp, Building2, Link2, Sparkles, ExternalLink, Star, Share2, Search, X, Flame, Clock, RefreshCw, Loader2 } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Radar, TrendingUp, Building2, Link2, Sparkles, ExternalLink, Star, Share2, Search, X, Flame, Clock, RefreshCw, Loader2, Send, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import type { IntelligencePost } from "@shared/schema";
+import type { User } from "@shared/models/auth";
 
 const categoryConfig: Record<string, { icon: typeof Radar; color: string; label: string; bgClass: string; activeBg: string }> = {
   industry: { icon: TrendingUp, color: "text-blue-600 dark:text-blue-400", label: "行业动态", bgClass: "bg-blue-100 border-blue-200 dark:bg-blue-500/10 dark:border-blue-500/20", activeBg: "bg-blue-200 border-blue-300 dark:bg-blue-500/25 dark:border-blue-500/40" },
@@ -33,6 +36,9 @@ export default function IntelligencePage() {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [sharePost, setSharePost] = useState<IntelligencePost | null>(null);
+  const [shareSearch, setShareSearch] = useState("");
+  const [sharedTo, setSharedTo] = useState<Set<string>>(new Set());
 
   const { data: posts = [], isLoading } = useQuery<IntelligencePost[]>({
     queryKey: ["/api/intelligence-posts"],
@@ -75,6 +81,35 @@ export default function IntelligencePage() {
     },
     onError: (err: Error) => {
       toast({ title: "更新失败", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const { data: allUsers = [] } = useQuery<User[]>({
+    queryKey: ["/api/users"],
+    enabled: !!sharePost,
+  });
+
+  const shareableUsers = useMemo(() => {
+    const filtered = allUsers.filter(u => u.id !== user?.id);
+    if (!shareSearch.trim()) return filtered;
+    const q = shareSearch.toLowerCase();
+    return filtered.filter(u =>
+      (u.firstName || "").toLowerCase().includes(q) ||
+      (u.lastName || "").toLowerCase().includes(q) ||
+      (u.email || "").toLowerCase().includes(q)
+    );
+  }, [allUsers, user, shareSearch]);
+
+  const shareMutation = useMutation({
+    mutationFn: async ({ postId, targetUserId }: { postId: number; targetUserId: string }) => {
+      await apiRequest("POST", `/api/intelligence-posts/${postId}/share`, { targetUserId });
+    },
+    onSuccess: (_, vars) => {
+      setSharedTo(prev => new Set(prev).add(vars.targetUserId));
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications/unread-count"] });
+    },
+    onError: () => {
+      toast({ title: "分享失败", variant: "destructive" });
     },
   });
 
@@ -406,8 +441,9 @@ export default function IntelligencePage() {
                   size="sm"
                   className="text-slate-400 hover:text-blue-400 hover:bg-blue-500/10"
                   onClick={() => {
-                    navigator.clipboard.writeText(`${selectedPost.title}\n${selectedPost.summary}`);
-                    toast({ title: "已复制到剪贴板" });
+                    setSharePost(selectedPost);
+                    setSharedTo(new Set());
+                    setShareSearch("");
                   }}
                   data-testid="button-share-intel"
                 >
@@ -416,6 +452,85 @@ export default function IntelligencePage() {
                 </Button>
               </div>
             </div>
+          </DialogContent>
+        )}
+      </Dialog>
+
+      <Dialog open={!!sharePost} onOpenChange={(open) => { if (!open) setSharePost(null); }}>
+        {sharePost && (
+          <DialogContent className="glass-dialog border-blue-500/20 max-w-sm" data-testid="dialog-share-intel">
+            <DialogHeader>
+              <DialogTitle className="glass-dialog-header -mx-6 -mt-6 px-5 py-3 rounded-t-lg text-sm font-medium text-blue-700 dark:text-blue-200 flex items-center gap-2">
+                <Share2 className="h-4 w-4" />
+                分享情报
+              </DialogTitle>
+            </DialogHeader>
+            <div className="mt-1 mb-3">
+              <p className="text-xs text-slate-500 dark:text-slate-400 truncate">「{sharePost.title}」</p>
+            </div>
+            <div className="relative mb-3">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+              <input
+                type="text"
+                placeholder="搜索用户..."
+                value={shareSearch}
+                onChange={e => setShareSearch(e.target.value)}
+                className="w-full h-8 pl-8 pr-3 rounded-lg text-xs glass-input text-slate-700 dark:text-slate-300 placeholder:text-slate-400"
+                data-testid="input-share-search"
+              />
+            </div>
+            <ScrollArea className="max-h-[260px] -mx-1">
+              <div className="space-y-1 px-1">
+                {shareableUsers.length > 0 ? shareableUsers.map(u => {
+                  const alreadyShared = sharedTo.has(u.id);
+                  return (
+                    <div
+                      key={u.id}
+                      className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-blue-500/5 transition-colors"
+                      data-testid={`share-user-${u.id}`}
+                    >
+                      <Avatar className="h-7 w-7 border border-blue-500/15">
+                        <AvatarImage src={u.profileImageUrl || ""} />
+                        <AvatarFallback className="bg-blue-500/10 text-blue-500 dark:text-blue-400 text-[10px]">
+                          {(u.firstName || "U")[0]}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-slate-700 dark:text-slate-200 truncate">
+                          {[u.firstName, u.lastName].filter(Boolean).join("") || u.email}
+                        </p>
+                        <p className="text-[10px] text-slate-400 dark:text-slate-500 truncate">{u.email}</p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        disabled={alreadyShared || shareMutation.isPending}
+                        onClick={() => shareMutation.mutate({ postId: sharePost.id, targetUserId: u.id })}
+                        className={`h-7 px-2.5 text-[11px] ${
+                          alreadyShared
+                            ? "text-emerald-500 dark:text-emerald-400 cursor-default"
+                            : "text-blue-500 hover:text-blue-600 hover:bg-blue-500/10"
+                        }`}
+                        data-testid={`button-share-to-${u.id}`}
+                      >
+                        {alreadyShared ? (
+                          <><Check className="h-3 w-3 mr-1" />已分享</>
+                        ) : (
+                          <><Send className="h-3 w-3 mr-1" />分享</>
+                        )}
+                      </Button>
+                    </div>
+                  );
+                }) : (
+                  <p className="text-xs text-center text-slate-400 dark:text-slate-600 py-8">暂无可分享的用户</p>
+                )}
+              </div>
+            </ScrollArea>
+            {sharedTo.size > 0 && (
+              <p className="text-[11px] text-emerald-500 dark:text-emerald-400 mt-2 text-center">
+                已成功分享给 {sharedTo.size} 位用户
+              </p>
+            )}
           </DialogContent>
         )}
       </Dialog>
