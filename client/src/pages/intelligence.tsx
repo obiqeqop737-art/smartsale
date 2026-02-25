@@ -458,14 +458,14 @@ export default function IntelligencePage() {
 
       <Dialog open={!!sharePost} onOpenChange={(open) => { if (!open) setSharePost(null); }}>
         {sharePost && (
-          <DialogContent className="glass-dialog border-blue-500/20 max-w-sm" data-testid="dialog-share-intel">
+          <DialogContent className="glass-dialog border-blue-500/20 w-[90vw] max-w-[360px] mx-auto" data-testid="dialog-share-intel">
             <DialogHeader>
-              <DialogTitle className="glass-dialog-header -mx-6 -mt-6 px-5 py-3 rounded-t-lg text-sm font-medium text-blue-700 dark:text-blue-200 flex items-center gap-2">
+              <DialogTitle className="text-sm font-medium text-blue-700 dark:text-blue-200 flex items-center gap-2">
                 <Share2 className="h-4 w-4" />
                 分享情报
               </DialogTitle>
             </DialogHeader>
-            <div className="mt-1 mb-3">
+            <div className="mb-3">
               <p className="text-xs text-slate-500 dark:text-slate-400 truncate">「{sharePost.title}」</p>
             </div>
             <div className="relative mb-3">
