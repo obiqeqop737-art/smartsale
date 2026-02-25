@@ -21,9 +21,9 @@ import { useAuth } from "@/hooks/use-auth";
 import type { IntelligencePost } from "@shared/schema";
 
 const categoryConfig: Record<string, { icon: typeof Radar; color: string; label: string; bgClass: string; activeBg: string }> = {
-  industry: { icon: TrendingUp, color: "text-blue-400", label: "行业动态", bgClass: "bg-blue-500/10 border-blue-500/20", activeBg: "bg-blue-500/25 border-blue-500/40" },
-  competitor: { icon: Building2, color: "text-purple-400", label: "友商追踪", bgClass: "bg-purple-500/10 border-purple-500/20", activeBg: "bg-purple-500/25 border-purple-500/40" },
-  supply_chain: { icon: Link2, color: "text-emerald-400", label: "供应链", bgClass: "bg-emerald-500/10 border-emerald-500/20", activeBg: "bg-emerald-500/25 border-emerald-500/40" },
+  industry: { icon: TrendingUp, color: "text-blue-600 dark:text-blue-400", label: "行业动态", bgClass: "bg-blue-100 border-blue-200 dark:bg-blue-500/10 dark:border-blue-500/20", activeBg: "bg-blue-200 border-blue-300 dark:bg-blue-500/25 dark:border-blue-500/40" },
+  competitor: { icon: Building2, color: "text-purple-600 dark:text-purple-400", label: "友商追踪", bgClass: "bg-purple-100 border-purple-200 dark:bg-purple-500/10 dark:border-purple-500/20", activeBg: "bg-purple-200 border-purple-300 dark:bg-purple-500/25 dark:border-purple-500/40" },
+  supply_chain: { icon: Link2, color: "text-emerald-600 dark:text-emerald-400", label: "供应链", bgClass: "bg-emerald-100 border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/20", activeBg: "bg-emerald-200 border-emerald-300 dark:bg-emerald-500/25 dark:border-emerald-500/40" },
 };
 
 export default function IntelligencePage() {
@@ -206,8 +206,8 @@ export default function IntelligencePage() {
           onClick={() => { setActiveCategory(null); setShowFavoritesOnly(false); }}
           className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs transition-all ${
             !activeCategory && !showFavoritesOnly
-              ? "bg-blue-500/20 border-blue-500/40 text-blue-300"
-              : "bg-slate-800/30 border-slate-700/30 text-slate-500 hover:text-slate-300 hover:border-slate-600/40"
+              ? "bg-blue-100 border-blue-300 text-blue-700 dark:bg-blue-500/20 dark:border-blue-500/40 dark:text-blue-300"
+              : "bg-slate-100 border-slate-200 text-slate-600 hover:text-slate-700 hover:border-slate-300 dark:bg-slate-800/30 dark:border-slate-700/30 dark:text-slate-500 dark:hover:text-slate-300 dark:hover:border-slate-600/40"
           }`}
           data-testid="filter-all"
         >
@@ -218,12 +218,12 @@ export default function IntelligencePage() {
           onClick={() => { setShowFavoritesOnly(!showFavoritesOnly); setActiveCategory(null); }}
           className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs transition-all ${
             showFavoritesOnly
-              ? "bg-amber-500/20 border-amber-500/40 text-amber-300"
-              : "bg-slate-800/30 border-slate-700/30 text-slate-500 hover:text-amber-300 hover:border-amber-600/40"
+              ? "bg-amber-100 border-amber-300 text-amber-700 dark:bg-amber-500/20 dark:border-amber-500/40 dark:text-amber-300"
+              : "bg-slate-100 border-slate-200 text-slate-600 hover:text-amber-600 hover:border-amber-300 dark:bg-slate-800/30 dark:border-slate-700/30 dark:text-slate-500 dark:hover:text-amber-300 dark:hover:border-amber-600/40"
           }`}
           data-testid="filter-favorites"
         >
-          <Star className={`h-3 w-3 ${showFavoritesOnly ? "fill-amber-300" : ""}`} />
+          <Star className={`h-3 w-3 ${showFavoritesOnly ? "fill-amber-500 dark:fill-amber-300" : ""}`} />
           我的收藏
           <span className="ml-1 text-[10px] opacity-70">{favorites.length}</span>
         </button>
