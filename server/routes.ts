@@ -1002,6 +1002,9 @@ ${reportsText}
       if (currentUser?.role !== "admin") {
         return res.status(403).json({ message: "Admin access required" });
       }
+      if (req.body?.clearOld) {
+        await storage.deleteAllIntelligencePosts();
+      }
       const count = await generateIntelligence();
       res.json({ success: true, count, message: `成功生成 ${count} 条情报` });
     } catch (error: any) {

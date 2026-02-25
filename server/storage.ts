@@ -48,6 +48,7 @@ export interface IStorage {
 
   getIntelligencePosts(): Promise<IntelligencePost[]>;
   createIntelligencePost(post: InsertIntelligencePost): Promise<IntelligencePost>;
+  deleteAllIntelligencePosts(): Promise<void>;
   toggleFavorite(userId: string, intelId: number): Promise<boolean>;
   getFavorites(userId: string): Promise<number[]>;
 
@@ -229,6 +230,11 @@ export class DatabaseStorage implements IStorage {
 
   async getIntelligencePosts(): Promise<IntelligencePost[]> {
     return db.select().from(intelligencePosts).orderBy(desc(intelligencePosts.publishedAt));
+  }
+
+  async deleteAllIntelligencePosts(): Promise<void> {
+    await db.delete(userFavorites);
+    await db.delete(intelligencePosts);
   }
 
   async createIntelligencePost(post: InsertIntelligencePost): Promise<IntelligencePost> {

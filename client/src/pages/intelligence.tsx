@@ -70,8 +70,8 @@ export default function IntelligencePage() {
   });
 
   const triggerMutation = useMutation({
-    mutationFn: async () => {
-      const res = await apiRequest("POST", "/api/intelligence-scheduler/trigger");
+    mutationFn: async (clearOld?: boolean) => {
+      const res = await apiRequest("POST", "/api/intelligence-scheduler/trigger", { clearOld: !!clearOld });
       return res.json();
     },
     onSuccess: (data) => {
@@ -200,7 +200,7 @@ export default function IntelligencePage() {
                     variant="ghost"
                     size="icon"
                     className="h-9 w-9 rounded-lg border border-blue-500/15 text-blue-400/60 hover:text-blue-400 hover:bg-blue-500/10"
-                    onClick={() => triggerMutation.mutate()}
+                    onClick={() => triggerMutation.mutate(true)}
                     disabled={triggerMutation.isPending}
                     data-testid="button-trigger-intel-update"
                   >
@@ -212,7 +212,7 @@ export default function IntelligencePage() {
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent className="glass-dialog border-blue-500/20 text-xs">
-                  手动触发 AI 情报更新
+                  清除旧数据，联网搜索最新情报
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
