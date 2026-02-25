@@ -155,7 +155,7 @@ export default function IntelligencePage() {
 
   return (
     <div className="flex h-full flex-col p-4 md:p-6" data-testid="page-intelligence">
-      <div className="mb-3 md:mb-6 flex flex-col gap-2 md:gap-4">
+      <div className="shrink-0 mb-3 md:mb-6 flex flex-col gap-2 md:gap-4">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
             <div className="h-8 w-8 shrink-0 rounded-lg bg-blue-500/15 border border-blue-500/20 flex items-center justify-center">
@@ -213,7 +213,7 @@ export default function IntelligencePage() {
         </div>
       </div>
 
-      <div className="mb-4 flex gap-2 overflow-x-auto pb-1 scrollbar-hide md:flex-wrap md:overflow-visible md:pb-0">
+      <div className="shrink-0 mb-3 md:mb-4 flex gap-2 overflow-x-auto pb-1 scrollbar-hide md:flex-wrap md:overflow-visible md:pb-0">
         <button
           onClick={() => { setActiveCategory(null); setShowFavoritesOnly(false); }}
           className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs whitespace-nowrap transition-all ${
@@ -258,6 +258,7 @@ export default function IntelligencePage() {
         })}
       </div>
 
+      <div className="flex-1 min-h-0 overflow-y-auto">
       {isLoading ? (
         <div className="columns-1 gap-3 md:gap-4 sm:columns-2 lg:columns-3">
           {Array.from({ length: 6 }).map((_, i) => (
@@ -353,6 +354,7 @@ export default function IntelligencePage() {
           })}
         </div>
       )}
+      </div>
 
       <Dialog open={selectedPost !== null} onOpenChange={(open) => !open && setSelectedPost(null)}>
         {selectedPost && (
