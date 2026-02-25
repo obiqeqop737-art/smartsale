@@ -60,9 +60,9 @@ const columns = [
 ];
 
 const priorityMap: Record<string, { label: string; color: string; bgColor: string }> = {
-  low: { label: "低", color: "text-slate-400", bgColor: "bg-slate-500/10 border-slate-500/20" },
-  medium: { label: "中", color: "text-blue-400", bgColor: "bg-blue-500/10 border-blue-500/20" },
-  high: { label: "高", color: "text-red-400", bgColor: "bg-red-500/10 border-red-500/20" },
+  low: { label: "低", color: "text-slate-500 dark:text-slate-400", bgColor: "bg-transparent dark:bg-slate-500/10 border-slate-300 dark:border-slate-500/20" },
+  medium: { label: "中", color: "text-blue-600 dark:text-blue-400", bgColor: "bg-transparent dark:bg-blue-500/10 border-blue-300 dark:border-blue-500/20" },
+  high: { label: "高", color: "text-red-600 dark:text-red-400", bgColor: "bg-transparent dark:bg-red-500/10 border-red-300 dark:border-red-500/20" },
 };
 
 export default function TasksPage() {
@@ -269,11 +269,11 @@ export default function TasksPage() {
         </div>
         <div className="flex items-center gap-2">
           {isDeptHead && (
-            <div className="flex bg-slate-800/30 dark:bg-slate-800/50 rounded-lg p-0.5 border border-blue-500/10">
+            <div className="flex bg-slate-100 dark:bg-slate-800/50 rounded-lg p-0.5 border border-slate-200 dark:border-blue-500/10">
               <button
                 onClick={() => setViewMode("my")}
                 className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-                  viewMode === "my" ? "bg-blue-500/20 text-blue-400 shadow-sm" : "text-slate-400 hover:text-slate-300"
+                  viewMode === "my" ? "bg-white dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 shadow-sm" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
                 }`}
                 data-testid="button-view-my-tasks"
               >
@@ -282,7 +282,7 @@ export default function TasksPage() {
               <button
                 onClick={() => setViewMode("team")}
                 className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-1 ${
-                  viewMode === "team" ? "bg-amber-500/20 text-amber-400 shadow-sm" : "text-slate-400 hover:text-slate-300"
+                  viewMode === "team" ? "bg-white dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 shadow-sm" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
                 }`}
                 data-testid="button-view-team-tasks"
               >
@@ -311,8 +311,8 @@ export default function TasksPage() {
       {viewMode === "team" && isDeptHead && (
         <div className="mb-3 flex items-center gap-2">
           <Users className="h-4 w-4 text-amber-400" />
-          <span className="text-xs text-amber-400 font-medium">正在查看下属团队任务</span>
-          <Badge variant="outline" className="text-[10px] h-4 bg-amber-500/10 text-amber-400 border-amber-500/20">
+          <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">正在查看下属团队任务</span>
+          <Badge variant="outline" className="text-[10px] h-4 bg-transparent dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-300 dark:border-amber-500/20">
             {teamData?.subordinateIds?.length || 0} 人
           </Badge>
         </div>
