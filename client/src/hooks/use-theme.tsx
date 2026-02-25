@@ -1,16 +1,32 @@
-import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
+
+declare global {
+  interface Document {
+    startViewTransition?: (callback: () => void) => { ready: Promise<void> };
+  }
+}
 
 type Theme = "dark" | "light";
 
 interface ThemeContextType {
   theme: Theme;
-  toggleTheme: () => void;
+  toggleTheme: (e?: React.MouseEvent) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType>({
   theme: "dark",
   toggleTheme: () => {},
 });
+
+function applyThemeClass(theme: Theme) {
+  const root = document.documentElement;
+  if (theme === "dark") {
+    root.classList.add("dark");
+  } else {
+    root.classList.remove("dark");
+  }
+  localStorage.setItem("documind-theme", theme);
+}
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<Theme>(() => {
@@ -19,53 +35,37 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     }
     return "dark";
   });
-  const isFirstRender = useRef(true);
 
   useEffect(() => {
-    const root = document.documentElement;
-    if (theme === "dark") {
-      root.classList.add("dark");
-    } else {
-      root.classList.remove("dark");
-    }
-    localStorage.setItem("documind-theme", theme);
-    isFirstRender.current = false;
+    applyThemeClass(theme);
   }, [theme]);
 
-  const toggleTheme = useCallback(() => {
+  const toggleTheme = useCallback((e?: React.MouseEvent) => {
     const nextTheme: Theme = theme === "dark" ? "light" : "dark";
 
-    const overlay = document.createElement("div");
-    overlay.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      z-index: 99999;
-      pointer-events: none;
-      background: ${nextTheme === "dark" ? "#0f172a" : "#f1f5f9"};
-      clip-path: inset(0 100% 0 0);
-      transition: clip-path 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-    `;
-    document.body.appendChild(overlay);
+    const btn = e?.currentTarget as HTMLElement | undefined;
+    const rect = btn?.getBoundingClientRect();
+    const x = rect ? rect.left + rect.width / 2 : window.innerWidth - 60;
+    const y = rect ? rect.top + rect.height / 2 : 24;
 
-    requestAnimationFrame(() => {
-      overlay.style.clipPath = "inset(0 0 0 0)";
-    });
+    const endRadius = Math.hypot(
+      Math.max(x, window.innerWidth - x),
+      Math.max(y, window.innerHeight - y)
+    );
 
-    setTimeout(() => {
+    if (typeof document.startViewTransition === "function") {
+      document.startViewTransition(() => {
+        applyThemeClass(nextTheme);
+        setTheme(nextTheme);
+      }).ready.then(() => {
+        document.documentElement.animate(
+          { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${endRadius}px at ${x}px ${y}px)`] },
+          { duration: 500, easing: "cubic-bezier(0.4, 0, 0.2, 1)", pseudoElement: "::view-transition-new(root)" }
+        );
+      }).catch(() => {});
+    } else {
       setTheme(nextTheme);
-
-      requestAnimationFrame(() => {
-        overlay.style.transition = "opacity 0.35s ease";
-        overlay.style.opacity = "0";
-      });
-
-      setTimeout(() => {
-        if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
-      }, 400);
-    }, 500);
+    }
   }, [theme]);
 
   return (
