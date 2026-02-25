@@ -371,8 +371,8 @@ export default function TasksPage() {
             onClick={() => setPriorityFilter(f.key)}
             className={`rounded-full border px-2.5 py-1 text-[10px] transition-all ${
               priorityFilter === f.key
-                ? "bg-blue-500/20 border-blue-500/40 text-blue-300"
-                : "bg-slate-800/30 border-slate-700/30 text-slate-500 hover:text-slate-300"
+                ? "bg-blue-500/10 dark:bg-blue-500/20 border-blue-400 dark:border-blue-500/40 text-blue-600 dark:text-blue-300"
+                : "bg-transparent border-slate-300 dark:border-slate-700/30 text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
             }`}
             data-testid={`filter-priority-${f.key ?? "all"}`}
           >
