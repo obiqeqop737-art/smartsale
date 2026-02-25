@@ -194,15 +194,19 @@ export default function ProfilePage() {
           <div className="pt-2">
             <h3 className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-2 flex items-center gap-2">
               <Users className="h-3 w-3" />
-              关联下级 (同部门)
+              关联下级
             </h3>
             <div className="flex flex-wrap gap-2">
-              {profile?.departmentUsers?.filter((u: any) => u.superiorId === profile.id).map((u: any) => (
-                <div key={u.id} className="text-xs bg-blue-500/10 text-blue-400 px-2 py-1 rounded border border-blue-500/20">
-                  {u.firstName || u.email}
-                </div>
-              ))}
-              {profile?.departmentUsers?.filter((u: any) => u.superiorId === profile.id).length === 0 && (
+              {profile?.departmentUsers && profile.departmentUsers.length > 0 ? (
+                profile.departmentUsers.map((u: any) => (
+                  <div key={u.id} className="text-xs bg-blue-100 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 px-2 py-1 rounded border border-blue-200 dark:border-blue-500/20 flex items-center gap-1">
+                    {u.firstName || u.email}
+                    {u.superiorId === profile.id && (
+                      <span className="text-[10px] text-emerald-500 dark:text-emerald-400">·直属</span>
+                    )}
+                  </div>
+                ))
+              ) : (
                 <span className="text-xs text-slate-500 italic">暂无关联下级</span>
               )}
             </div>

@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import type { User } from "@shared/schema";
 import { setupAuth, isAuthenticated, registerAuthRoutes } from "./replit_integrations/auth";
 import { GoogleGenAI } from "@google/genai";
 import multer from "multer";
@@ -660,9 +661,34 @@ ${reportsText}
       const user = await storage.getUserById(req.user.claims.sub);
       if (!user) return res.status(404).json({ message: "User not found" });
       
-      const deptUsers = user.departmentId ? 
-        (await storage.getUsersByDepartmentId(user.departmentId)).filter(u => u.id !== user.id) : 
-        [];
+      let deptUsers: User[] = [];
+      if (user.departmentId) {
+        const sameDeptUsers = await storage.getUsersByDepartmentId(user.departmentId);
+        deptUsers = sameDeptUsers.filter(u => u.id !== user.id);
+
+        if (user.userType === "department_head") {
+          const allDepts = await storage.getDepartments();
+          const childDeptIds: number[] = [];
+          const findChildren = (parentId: number) => {
+            for (const d of allDepts) {
+              if (d.parentId === parentId) {
+                childDeptIds.push(d.id);
+                findChildren(d.id);
+              }
+            }
+          };
+          findChildren(user.departmentId);
+          
+          for (const childId of childDeptIds) {
+            const childUsers = await storage.getUsersByDepartmentId(childId);
+            deptUsers.push(...childUsers.filter(u => u.id !== user.id));
+          }
+
+          const allUsers = await storage.getAllUsers();
+          const directReports = allUsers.filter(u => u.superiorId === user.id && !deptUsers.some(d => d.id === u.id) && u.id !== user.id);
+          deptUsers.push(...directReports);
+        }
+      }
         
       res.json({
         ...user,
