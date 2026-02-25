@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -12,6 +12,7 @@ import {
   MessageSquare,
   X,
   ChevronRight,
+  ChevronDown,
   AlertTriangle,
   CheckCircle2,
   Clock,
@@ -77,6 +78,7 @@ export default function AdminPage() {
   const [deptName, setDeptName] = useState("");
   const [deptParentId, setDeptParentId] = useState<string>("");
   const [deleteDeptId, setDeleteDeptId] = useState<number | null>(null);
+  const [expandedDeptIds, setExpandedDeptIds] = useState<Set<number>>(new Set());
 
   const { data: allUsers = [], isLoading: usersLoading } = useQuery<User[]>({ queryKey: ["/api/admin/users"] });
   const { data: handoverLogs = [] } = useQuery<HandoverLog[]>({ queryKey: ["/api/admin/handover-logs"] });
@@ -365,87 +367,171 @@ export default function AdminPage() {
         </div>
       )}
 
-      {activeTab === "departments" && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-2">
-              <Building2 className="h-5 w-5 text-purple-400" />
-              部门列表
-            </h2>
-            <Button
-              onClick={() => {
-                setEditingDept(null);
-                setDeptName("");
-                setDeptParentId("");
-                setDeptDialogOpen(true);
-              }}
-              className="glow-btn text-white border-0"
-              data-testid="button-add-department"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              新增部门
-            </Button>
-          </div>
-          <div className="glass-card rounded-xl overflow-hidden">
-            {departments.length === 0 ? (
-              <div className="p-12 text-center">
-                <Building2 className="h-10 w-10 mx-auto text-slate-600 mb-3" />
-                <p className="text-sm text-slate-400 dark:text-slate-500">暂无部门，点击上方按钮新增</p>
+      {activeTab === "departments" && (() => {
+        const getDescendantIds = (deptId: number): number[] => {
+          const children = departments.filter(d => d.parentId === deptId);
+          let ids: number[] = [];
+          for (const child of children) {
+            ids.push(child.id);
+            ids = ids.concat(getDescendantIds(child.id));
+          }
+          return ids;
+        };
+
+        const getTreeCounts = (deptId: number) => {
+          const allIds = [deptId, ...getDescendantIds(deptId)];
+          const directMembers = allUsers.filter(u => u.departmentId === deptId).length;
+          const directHeads = allUsers.filter(u => u.departmentId === deptId && u.userType === "department_head").length;
+          const totalMembers = allUsers.filter(u => u.departmentId && allIds.includes(u.departmentId)).length;
+          const totalHeads = allUsers.filter(u => u.departmentId && allIds.includes(u.departmentId) && u.userType === "department_head").length;
+          const childCount = departments.filter(d => d.parentId === deptId).length;
+          return { directMembers, directHeads, totalMembers, totalHeads, childCount };
+        };
+
+        const renderDeptNode = (dept: any, depth: number) => {
+          const children = departments.filter(d => d.parentId === dept.id);
+          const { directMembers, directHeads, totalMembers, totalHeads, childCount } = getTreeCounts(dept.id);
+          const hasChildren = children.length > 0;
+          const isExpanded = expandedDeptIds.has(dept.id);
+          const hasSubMembers = totalMembers > directMembers;
+
+          return (
+            <div key={dept.id}>
+              <div
+                className="flex items-center gap-3 px-4 py-3 hover:bg-blue-500/5 transition-colors group"
+                style={{ paddingLeft: `${depth * 24 + 16}px` }}
+                data-testid={`dept-row-${dept.id}`}
+              >
+                {hasChildren ? (
+                  <button
+                    onClick={() => setExpandedDeptIds(prev => {
+                      const next = new Set(prev);
+                      next.has(dept.id) ? next.delete(dept.id) : next.add(dept.id);
+                      return next;
+                    })}
+                    className="p-0.5 text-blue-400/60 hover:text-blue-400 transition-colors shrink-0"
+                  >
+                    {isExpanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+                  </button>
+                ) : (
+                  <span className="w-[18px] shrink-0" />
+                )}
+                <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${
+                  depth === 0 ? "bg-purple-500/15 border border-purple-500/25" :
+                  depth === 1 ? "bg-blue-500/10 border border-blue-500/20" :
+                  "bg-slate-500/10 border border-slate-500/20"
+                }`}>
+                  <Building2 className={`h-4 w-4 ${
+                    depth === 0 ? "text-purple-400" : depth === 1 ? "text-blue-400" : "text-slate-400"
+                  }`} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-slate-700 dark:text-slate-200">{dept.name}</p>
+                  <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                    <span className="text-[10px] text-blue-400">
+                      {directMembers} 名直属成员
+                    </span>
+                    {hasSubMembers && (
+                      <span className="text-[10px] text-cyan-400/80">
+                        (含下级共 {totalMembers} 人)
+                      </span>
+                    )}
+                    {directHeads > 0 && (
+                      <span className="text-[10px] text-amber-400 flex items-center gap-0.5">
+                        <Crown className="h-2.5 w-2.5" />
+                        {directHeads} 名部门长
+                        {totalHeads > directHeads && <span className="text-amber-400/60">(含下级 {totalHeads})</span>}
+                      </span>
+                    )}
+                    {!directHeads && totalHeads > 0 && (
+                      <span className="text-[10px] text-amber-400/60 flex items-center gap-0.5">
+                        <Crown className="h-2.5 w-2.5" />
+                        下级共 {totalHeads} 名部门长
+                      </span>
+                    )}
+                    {childCount > 0 && (
+                      <span className="text-[10px] text-slate-500">{childCount} 个子部门</span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-slate-400 hover:text-blue-400 hover:bg-blue-500/10"
+                    onClick={() => {
+                      setEditingDept(dept);
+                      setDeptName(dept.name);
+                      setDeptParentId(dept.parentId?.toString() || "");
+                      setDeptDialogOpen(true);
+                    }}
+                    data-testid={`button-edit-dept-${dept.id}`}
+                  >
+                    <Edit3 className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-slate-400 hover:text-red-400 hover:bg-red-500/10"
+                    onClick={() => setDeleteDeptId(dept.id)}
+                    data-testid={`button-delete-dept-${dept.id}`}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
               </div>
-            ) : (
-              <div className="divide-y divide-blue-500/5">
-                {departments.map(dept => {
-                  const parentDept = dept.parentId ? departments.find(d => d.id === dept.parentId) : null;
-                  const memberCount = allUsers.filter(u => u.departmentId === dept.id).length;
-                  const headCount = allUsers.filter(u => u.departmentId === dept.id && u.userType === "department_head").length;
-                  return (
-                    <div key={dept.id} className="flex items-center gap-4 px-5 py-4 hover:bg-blue-500/5 transition-colors" data-testid={`dept-row-${dept.id}`}>
-                      <div className="h-10 w-10 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0">
-                        <Building2 className="h-5 w-5 text-purple-400" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-slate-700 dark:text-slate-200">{dept.name}</p>
-                        <div className="flex items-center gap-3 mt-0.5">
-                          {parentDept && (
-                            <span className="text-[10px] text-slate-400 dark:text-slate-500">上级: {parentDept.name}</span>
-                          )}
-                          <span className="text-[10px] text-blue-400">{memberCount} 名成员</span>
-                          {headCount > 0 && <span className="text-[10px] text-amber-400">{headCount} 名部门长</span>}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-slate-400 hover:text-blue-400 hover:bg-blue-500/10"
-                          onClick={() => {
-                            setEditingDept(dept);
-                            setDeptName(dept.name);
-                            setDeptParentId(dept.parentId?.toString() || "");
-                            setDeptDialogOpen(true);
-                          }}
-                          data-testid={`button-edit-dept-${dept.id}`}
-                        >
-                          <Edit3 className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-slate-400 hover:text-red-400 hover:bg-red-500/10"
-                          onClick={() => setDeleteDeptId(dept.id)}
-                          data-testid={`button-delete-dept-${dept.id}`}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+              {hasChildren && isExpanded && (
+                <div className="relative">
+                  <div
+                    className="absolute w-px bg-gradient-to-b from-blue-500/20 to-transparent"
+                    style={{ left: `${depth * 24 + 25}px`, top: 0, bottom: 0 }}
+                  />
+                  {children.map(child => renderDeptNode(child, depth + 1))}
+                </div>
+              )}
+            </div>
+          );
+        };
+
+        const rootDepts = departments.filter(d => !d.parentId);
+
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-2">
+                <Building2 className="h-5 w-5 text-purple-400" />
+                部门架构
+              </h2>
+              <Button
+                onClick={() => {
+                  setEditingDept(null);
+                  setDeptName("");
+                  setDeptParentId("");
+                  setDeptDialogOpen(true);
+                }}
+                className="glow-btn text-white border-0"
+                data-testid="button-add-department"
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                新增部门
+              </Button>
+            </div>
+            <div className="glass-card rounded-xl overflow-hidden">
+              {departments.length === 0 ? (
+                <div className="p-12 text-center">
+                  <Building2 className="h-10 w-10 mx-auto text-slate-600 mb-3" />
+                  <p className="text-sm text-slate-400 dark:text-slate-500">暂无部门，点击上方按钮新增</p>
+                </div>
+              ) : (
+                <div className="py-1">
+                  {rootDepts.map(dept => renderDeptNode(dept, 0))}
+                  {departments.filter(d => d.parentId && !departments.some(p => p.id === d.parentId)).map(dept => renderDeptNode(dept, 0))}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {activeTab === "handover" && handoverLogs.length > 0 && (
         <div className="glass-card rounded-xl overflow-hidden" data-testid="section-handover-logs">
