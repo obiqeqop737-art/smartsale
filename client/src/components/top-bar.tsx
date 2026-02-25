@@ -1,5 +1,5 @@
-import { useLocation } from "wouter";
-import { Search, Bell, ChevronRight, Home, Sun, Moon, Menu } from "lucide-react";
+import { useLocation, Link } from "wouter";
+import { Search, Bell, ChevronRight, Home, Sun, Moon, Menu, UserCircle, LogOut } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,6 +20,7 @@ const routeNames: Record<string, string> = {
   "/intelligence": "情报雷达",
   "/tasks": "任务看板",
   "/summary": "每日总结",
+  "/profile": "个人中心",
 };
 
 interface TopBarProps {
@@ -120,8 +121,17 @@ export function TopBar({ user, isMobile, onMenuClick }: TopBarProps) {
               <p className="text-xs text-slate-400 dark:text-slate-500 truncate">{user.email}</p>
             </div>
             <DropdownMenuSeparator className="bg-blue-500/10" />
-            <DropdownMenuItem asChild className="text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-300 focus:text-blue-600 dark:focus:text-blue-300 focus:bg-blue-500/10 cursor-pointer">
-              <a href="/api/logout">退出登录</a>
+            <DropdownMenuItem asChild className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-300 focus:text-blue-600 dark:focus:text-blue-300 focus:bg-blue-500/10 cursor-pointer">
+              <Link href="/profile" data-testid="link-profile">
+                <UserCircle className="h-4 w-4 mr-2" />
+                个人中心
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild className="text-slate-500 dark:text-slate-400 hover:text-red-500 dark:hover:text-red-400 focus:text-red-500 dark:focus:text-red-400 focus:bg-red-500/10 cursor-pointer">
+              <a href="/api/logout" data-testid="link-logout">
+                <LogOut className="h-4 w-4 mr-2" />
+                退出登录
+              </a>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

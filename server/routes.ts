@@ -578,6 +578,24 @@ ${activityInfo}
     }
   });
 
+  app.post("/api/users/me/avatar", isAuthenticated, upload.single("avatar"), async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const file = req.file;
+      if (!file) return res.status(400).json({ message: "No file uploaded" });
+      if (!file.mimetype.startsWith("image/")) return res.status(400).json({ message: "File must be an image" });
+      if (file.size > 2 * 1024 * 1024) return res.status(400).json({ message: "Image must be under 2MB" });
+
+      const base64 = file.buffer.toString("base64");
+      const dataUrl = `data:${file.mimetype};base64,${base64}`;
+      const user = await storage.updateUser(userId, { profileImageUrl: dataUrl });
+      res.json(user);
+    } catch (error) {
+      console.error("Error uploading avatar:", error);
+      res.status(500).json({ message: "Failed to upload avatar" });
+    }
+  });
+
   app.get("/api/admin/users/:id/assets", isAuthenticated, async (req: any, res) => {
     try {
       const currentUser = await storage.getUserById(req.user.claims.sub);
