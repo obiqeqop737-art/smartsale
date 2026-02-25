@@ -1,6 +1,6 @@
 import { useLocation, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { Brain, Radar, KanbanSquare, FileText, LogOut, ChevronLeft, ChevronRight, LayoutDashboard, Puzzle, Shield } from "lucide-react";
+import { Brain, Radar, KanbanSquare, FileText, LogOut, ChevronLeft, ChevronRight, LayoutDashboard, Puzzle, Shield, User as UserIcon } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -13,6 +13,7 @@ const navItems = [
   { title: "情报雷达", url: "/intelligence", altUrl: null, icon: Radar, desc: "行业情报追踪", badgeKey: "intel" },
   { title: "任务看板", url: "/tasks", altUrl: null, icon: KanbanSquare, desc: "任务管理", badgeKey: "tasks" },
   { title: "每日总结", url: "/summary", altUrl: null, icon: FileText, desc: "AI工作日报", badgeKey: null },
+  { title: "个人中心", url: "/profile", altUrl: null, icon: UserIcon, desc: "个人信息设置", badgeKey: null },
 ];
 
 const bottomNavItems = [
@@ -116,6 +117,7 @@ export function AppSidebar({ user, collapsed, onToggle, onNavigate }: AppSidebar
           </div>
         )}
         {bottomNavItems.map((item) => {
+          if (item.url === "/admin" && user.role !== "admin") return null;
           const isActive = location === item.url || location === item.altUrl;
           const navLink = (
             <Link

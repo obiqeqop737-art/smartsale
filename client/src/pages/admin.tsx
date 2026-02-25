@@ -117,7 +117,31 @@ export default function AdminPage() {
             </div>
             超级管理台
           </h1>
-          <p className="mt-1 text-sm text-slate-400 dark:text-slate-500">用户管理 · 资产交接中心</p>
+          <p className="mt-1 text-sm text-slate-400 dark:text-slate-500">用户管理 · 资产交接中心 · 系统权限审计</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="glass-card p-4 rounded-xl border border-blue-500/10">
+          <div className="flex items-center gap-3 mb-2">
+            <Users className="h-5 w-5 text-blue-400" />
+            <span className="text-sm font-medium">总用户数</span>
+          </div>
+          <p className="text-2xl font-bold text-blue-500">{allUsers.length}</p>
+        </div>
+        <div className="glass-card p-4 rounded-xl border border-red-500/10">
+          <div className="flex items-center gap-3 mb-2">
+            <ArrowRightLeft className="h-5 w-5 text-red-400" />
+            <span className="text-sm font-medium">交接记录</span>
+          </div>
+          <p className="text-2xl font-bold text-red-500">{handoverLogs.length}</p>
+        </div>
+        <div className="glass-card p-4 rounded-xl border border-emerald-500/10">
+          <div className="flex items-center gap-3 mb-2">
+            <CheckCircle2 className="h-5 w-5 text-emerald-400" />
+            <span className="text-sm font-medium">系统状态</span>
+          </div>
+          <p className="text-2xl font-bold text-emerald-500">运行正常</p>
         </div>
       </div>
 

@@ -2,8 +2,7 @@ import { Express } from "express";
 import session from "express-session";
 import passport from "passport";
 import { Strategy as ReplitStrategy } from "passport-replit";
-import { authStorage } from "./storage";
-import { storage } from "../../storage";
+import { storage } from "../storage";
 
 export async function setupAuth(app: Express) {
   app.use(session({
@@ -44,4 +43,20 @@ export async function setupAuth(app: Express) {
       done(err);
     }
   });
+}
+
+export function registerAuthRoutes(app: Express) {
+  app.get("/api/login", passport.authenticate("replit"));
+  app.get("/api/auth/replit/callback", 
+    passport.authenticate("replit", { failureRedirect: "/login" }),
+    (req, res) => res.redirect("/")
+  );
+  app.get("/api/logout", (req, res) => {
+    req.logout(() => res.redirect("/"));
+  });
+}
+
+export function isAuthenticated(req: any, res: any, next: any) {
+  if (req.isAuthenticated()) return next();
+  res.status(401).json({ message: "Unauthorized" });
 }

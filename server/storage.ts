@@ -11,7 +11,7 @@ import {
   type UserFavorite, type InsertUserFavorite,
   type HandoverLog, type InsertHandoverLog,
 } from "@shared/schema";
-import { users, type User } from "@shared/models/auth";
+import { users, type User } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, gte, sql, isNull, count, ne } from "drizzle-orm";
 
@@ -65,6 +65,8 @@ export interface IStorage {
   }>;
 
   getAllUsers(): Promise<User[]>;
+  getUserById(id: string): Promise<User | undefined>;
+  updateUser(id: string, data: Partial<User>): Promise<User | undefined>;
   getUserAssetCounts(userId: string): Promise<{ files: number; folders: number; tasks: number; chatSessions: number }>;
   transferAssets(fromUserId: string, toUserId: string, operatorId: string, note?: string): Promise<HandoverLog>;
   getHandoverLogs(): Promise<HandoverLog[]>;
@@ -255,6 +257,16 @@ export class DatabaseStorage implements IStorage {
 
   async getAllUsers(): Promise<User[]> {
     return db.select().from(users).orderBy(desc(users.createdAt));
+  }
+
+  async getUserById(id: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async updateUser(id: string, data: Partial<User>): Promise<User | undefined> {
+    const [user] = await db.update(users).set(data).where(eq(users.id, id)).returning();
+    return user;
   }
 
   async getUserAssetCounts(userId: string) {

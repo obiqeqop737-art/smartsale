@@ -532,6 +532,10 @@ ${activityInfo}
 
   app.get("/api/admin/users", isAuthenticated, async (req: any, res) => {
     try {
+      const currentUser = await storage.getUserById(req.user.claims.sub);
+      if (currentUser?.role !== "admin") {
+        return res.status(403).json({ message: "Forbidden" });
+      }
       const allUsers = await storage.getAllUsers();
       res.json(allUsers);
     } catch (error) {
@@ -540,8 +544,46 @@ ${activityInfo}
     }
   });
 
+  app.get("/api/users/me", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUserById(req.user.claims.sub);
+      if (!user) return res.status(404).json({ message: "User not found" });
+      
+      const deptUsers = user.department ? 
+        (await storage.getAllUsers()).filter(u => u.department === user.department && u.id !== user.id) : 
+        [];
+        
+      res.json({
+        ...user,
+        departmentUsers: deptUsers
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch profile" });
+    }
+  });
+
+  app.patch("/api/users/me", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { firstName, profileImageUrl, department, superiorId } = req.body;
+      const user = await storage.updateUser(userId, {
+        firstName,
+        profileImageUrl,
+        department,
+        superiorId
+      });
+      res.json(user);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update profile" });
+    }
+  });
+
   app.get("/api/admin/users/:id/assets", isAuthenticated, async (req: any, res) => {
     try {
+      const currentUser = await storage.getUserById(req.user.id);
+      if (currentUser?.role !== "admin") {
+        return res.status(403).json({ message: "Forbidden" });
+      }
       const userId = req.params.id;
       const counts = await storage.getUserAssetCounts(userId);
       res.json(counts);
@@ -553,7 +595,11 @@ ${activityInfo}
 
   app.post("/api/admin/handover", isAuthenticated, async (req: any, res) => {
     try {
-      const operatorId = req.user.claims.sub;
+      const currentUser = await storage.getUserById(req.user.id);
+      if (currentUser?.role !== "admin") {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+      const operatorId = req.user.id;
       const { fromUserId, toUserId, note } = req.body;
       if (!fromUserId || typeof fromUserId !== "string" || !toUserId || typeof toUserId !== "string") {
         return res.status(400).json({ message: "Missing or invalid fromUserId or toUserId" });
@@ -581,6 +627,10 @@ ${activityInfo}
 
   app.get("/api/admin/handover-logs", isAuthenticated, async (req: any, res) => {
     try {
+      const currentUser = await storage.getUserById(req.user.id);
+      if (currentUser?.role !== "admin") {
+        return res.status(403).json({ message: "Forbidden" });
+      }
       const logs = await storage.getHandoverLogs();
       res.json(logs);
     } catch (error) {
