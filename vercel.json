@@ -1,15 +1,1 @@
-{
-  "version": 2,
-  "builds": [
-    {
-      "src": "index.html",
-      "use": "@vercel/static"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
-    }
-  ]
-}
+{"version":2,"builds":[{"src":"dist/index.cjs","use":"@vercel/node","config":{"maxLambdaSize":"50mb","nodeVersion":"20.x"}}],"routes":[{"src":"^/api/(.*)","dest":"/dist/index.cjs"},{"src":"^/(?!api).*","dest":"/dist/index.cjs"}],"env":{"NODE_ENV":"production"}}
