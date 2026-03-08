@@ -1,8 +1,10 @@
 {
   "version": 2,
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist/public",
   "builds": [
     {
-      "src": "dist/index.cjs",
+      "src": "package.json",
       "use": "@vercel/node",
       "config": {
         "maxLambdaSize": "50mb",
