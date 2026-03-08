@@ -1,34 +1,23 @@
-import { spawn } from 'child_process';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
+import { push } from "drizzle-kit";
+import * as path from "path";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const projectRoot = join(__dirname, '..');
+const projectRoot = path.join(__dirname, "..");
 
-console.log('Running database migrations...');
+console.log("[v0] Starting database migration using drizzle-kit push...");
+console.log("[v0] Project root:", projectRoot);
+console.log("[v0] DATABASE_URL is set:", !!process.env.DATABASE_URL);
 
-// Pass the DATABASE_URL to the child process
-const env = {
-  ...process.env,
-  NODE_ENV: process.env.NODE_ENV || 'production'
-};
-
-console.log('[v0] DATABASE_URL is set:', !!process.env.DATABASE_URL);
-
-const child = spawn('npm', ['run', 'db:push'], {
-  cwd: projectRoot,
-  stdio: 'inherit',
-  shell: true,
-  env
-});
-
-child.on('close', (code) => {
-  if (code === 0) {
-    console.log('Database migrations completed successfully!');
-    process.exit(0);
-  } else {
-    console.error(`Migration failed with code ${code}`);
-    process.exit(1);
-  }
-});
+try {
+  await push({
+    config: path.join(projectRoot, "drizzle.config.ts"),
+  });
+  console.log("[v0] Database migration completed successfully!");
+  process.exit(0);
+} catch (error) {
+  console.error("[v0] Migration failed:", error);
+  process.exit(1);
+}
