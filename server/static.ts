@@ -1,19 +1,29 @@
-// server/static.ts
+// server/static.ts - Express 静态文件服务
+import express from "express";
+import path from "path";
+import fs from "fs";
 
-import { NextResponse } from 'next/server';
+export function serveStatic(app: express.Express) {
+  const staticPath = path.join(process.cwd(), "dist", "public");
 
-export function middleware(req) {
-  const { pathname } = req.nextUrl;
-
-  // Use process.cwd() for path resolution in production
-  const isProduction = process.env.NODE_ENV === 'production';
-  const rootPath = isProduction ? process.cwd() : '.';
-  const staticPath = `${rootPath}/public/static${pathname}`;
-
-  // Handle SPA routing correctly
-  if (pathname.startsWith('/_next/') || pathname.startsWith('/static/')) {
-    return NextResponse.next();
+  // 检查静态文件目录是否存在
+  if (!fs.existsSync(staticPath)) {
+    console.warn("Static directory not found:", staticPath);
+    return;
   }
 
-  return NextResponse.rewrite(staticPath);
+  // 服务静态文件
+  app.use(express.static(staticPath));
+
+  // SPA 路由 fallback - 所有未匹配的路由返回 index.html
+  app.get("*", (_req, res) => {
+    const indexPath = path.join(staticPath, "index.html");
+    if (fs.existsSync(indexPath)) {
+      res.sendFile(indexPath);
+    } else {
+      res.status(404).send("Not Found");
+    }
+  });
+
+  console.log("Static files served from:", staticPath);
 }
