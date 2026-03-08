@@ -8,10 +8,19 @@ const projectRoot = join(__dirname, '..');
 
 console.log('Running database migrations...');
 
+// Pass the DATABASE_URL to the child process
+const env = {
+  ...process.env,
+  NODE_ENV: process.env.NODE_ENV || 'production'
+};
+
+console.log('[v0] DATABASE_URL is set:', !!process.env.DATABASE_URL);
+
 const child = spawn('npm', ['run', 'db:push'], {
   cwd: projectRoot,
   stdio: 'inherit',
-  shell: true
+  shell: true,
+  env
 });
 
 child.on('close', (code) => {
